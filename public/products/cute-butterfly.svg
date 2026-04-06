@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="200" height="200">
+  <!-- Cute butterfly -->
+  <!-- Body -->
+  <ellipse cx="50" cy="55" rx="4" ry="22" fill="#6B3FA0" stroke="#4A2D70" stroke-width="1"/>
+  <!-- Head -->
+  <circle cx="50" cy="32" r="6" fill="#6B3FA0" stroke="#4A2D70" stroke-width="1"/>
+  <!-- Eyes -->
+  <circle cx="47" cy="30" r="2" fill="white"/>
+  <circle cx="53" cy="30" r="2" fill="white"/>
+  <circle cx="47.5" cy="30" r="1" fill="#333"/>
+  <circle cx="53.5" cy="30" r="1" fill="#333"/>
+  <!-- Smile -->
+  <path d="M 46 35 Q 50 38 54 35" stroke="#4A2D70" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <!-- Antennae -->
+  <path d="M 47 27 Q 38 15 30 18" stroke="#6B3FA0" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M 53 27 Q 62 15 70 18" stroke="#6B3FA0" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="30" cy="18" r="3" fill="#FF69B4"/>
+  <circle cx="70" cy="18" r="3" fill="#FF69B4"/>
+  <!-- Upper wings -->
+  <ellipse cx="30" cy="42" rx="22" ry="18" fill="#FF69B4" stroke="#FF1493" stroke-width="1.5" transform="rotate(-15 30 42)"/>
+  <ellipse cx="70" cy="42" rx="22" ry="18" fill="#FF69B4" stroke="#FF1493" stroke-width="1.5" transform="rotate(15 70 42)"/>
+  <!-- Wing patterns upper -->
+  <circle cx="22" cy="38" r="6" fill="#FFB6C1" opacity="0.7"/>
+  <circle cx="38" cy="45" r="4" fill="#FFB6C1" opacity="0.7"/>
+  <circle cx="78" cy="38" r="6" fill="#FFB6C1" opacity="0.7"/>
+  <circle cx="62" cy="45" r="4" fill="#FFB6C1" opacity="0.7"/>
+  <!-- Lower wings -->
+  <ellipse cx="32" cy="65" rx="16" ry="14" fill="#87CEEB" stroke="#4682B4" stroke-width="1.5" transform="rotate(-10 32 65)"/>
+  <ellipse cx="68" cy="65" rx="16" ry="14" fill="#87CEEB" stroke="#4682B4" stroke-width="1.5" transform="rotate(10 68 65)"/>
+  <!-- Wing patterns lower -->
+  <circle cx="26" cy="63" r="5" fill="#B0E0E6" opacity="0.7"/>
+  <circle cx="74" cy="63" r="5" fill="#B0E0E6" opacity="0.7"/>
+</svg>
