@@ -43,41 +43,40 @@ function PaymentContent() {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isExpired, setIsExpired] = useState(false);
 
-  // Check if order is expired (1 minute timeout - TESTING MODE)
-  const hasUpdatedRef = { current: false }; // Use ref to prevent re-render reset
+  // Check if order is expired (5 minutes timeout)
+  const hasUpdatedRef = { current: false };
+  const createdAtRef = { current: 0 };
 
   useEffect(() => {
     if (!selectedOrder || !selectedOrder.created_at) return;
-    if (selectedOrder.status !== 'pending') return; // Hanya check jika status masih pending
-    if (hasUpdatedRef.current) return; // Skip jika sudah updated
+    if (selectedOrder.status !== 'pending') return;
+    if (hasUpdatedRef.current) return;
+
+    // Store createdAt in ref to avoid recalculation on re-renders
+    if (createdAtRef.current === 0) {
+      createdAtRef.current = new Date(selectedOrder.created_at).getTime();
+    }
 
     let expireInterval: NodeJS.Timeout | null = null;
 
     const checkExpiry = () => {
-      const createdAt = new Date(selectedOrder.created_at).getTime();
       const now = Date.now();
-      const elapsed = now - createdAt;
-      const oneMinute = 1 * 60 * 1000; // 1 minute in milliseconds (TESTING MODE)
-      const remaining = oneMinute - elapsed;
+      const elapsed = now - createdAtRef.current;
+      const fiveMinutes = 5 * 60 * 1000; // 5 minutes
+      const remaining = fiveMinutes - elapsed;
 
       if (remaining <= 0 && !hasUpdatedRef.current) {
-        // Jika sudah upload bukti, jangan auto-gagal
-        if (!selectedOrder.payment_proof_url && selectedOrder.status === 'pending') {
-          hasUpdatedRef.current = true; // Set ref agar tidak update berkali-kali
-          
+        if (!selectedOrder.payment_proof_url) {
+          hasUpdatedRef.current = true;
+
           if (expireInterval) clearInterval(expireInterval);
-          
+
           setIsExpired(true);
           setTimeLeft(0);
 
           console.log('⏰ Order expired! Updating database to status: expired');
           console.log('Order ID:', selectedOrder.id);
-          console.log('Order Custom ID:', selectedOrder.custom_id);
-          console.log('Created at:', selectedOrder.created_at);
-          console.log('Elapsed time:', Math.floor(elapsed / 1000), 'seconds');
 
-          // IMPORTANT: MUST use API endpoint (has admin access with service role key)
-          // Direct Supabase client won't work due to RLS restrictions
           fetch(`/api/payment/status/${selectedOrder.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -85,44 +84,32 @@ function PaymentContent() {
           })
             .then(res => res.json())
             .then(result => {
-              console.log('API Response:', result);
-
               if (result.success) {
                 console.log('✅ SUCCESS: Database updated to expired');
-                
-                // Update states setelah berhasil
                 setSelectedOrder(prev => prev ? { ...prev, status: 'expired' } : null);
-                setOrders(prev => prev.map(o => 
+                setOrders(prev => prev.map(o =>
                   o.id === selectedOrder.id ? { ...o, status: 'expired' } : o
                 ));
-                
-                console.log('✅ UI updated to expired');
               } else {
-                console.error('❌ FAILED: API returned error:', result.error);
+                console.error('❌ FAILED:', result.error);
               }
             })
             .catch(error => {
-              console.error('❌ FAILED: Network error during auto-expire:', error);
+              console.error('❌ FAILED:', error);
             });
-        } else if (selectedOrder.payment_proof_url) {
-          // Sudah upload bukti, stop timer tapi jangan auto-gagal
-          console.log('✅ Payment proof uploaded, stopping timer');
-          setIsExpired(false);
-          setTimeLeft(0);
         }
       } else if (remaining > 0) {
-        setTimeLeft(Math.floor(remaining / 1000)); // seconds
+        setTimeLeft(Math.floor(remaining / 1000));
       }
     };
 
     checkExpiry();
-    expireInterval = setInterval(checkExpiry, 5000); // Check every 5 seconds (not 1 second!)
+    expireInterval = setInterval(checkExpiry, 1000); // Update every 1 second for smooth countdown
 
     return () => {
       if (expireInterval) clearInterval(expireInterval);
-      console.log('Cleanup expiry check interval');
     };
-  }, [selectedOrder?.id]); // Only depend on order ID, not whole object
+  }, [selectedOrder?.id, selectedOrder?.payment_proof_url]);
 
   const updateOrderStatus = async (orderId: string, status: 'pending' | 'berhasil' | 'gagal' | 'expired') => {
     try {
