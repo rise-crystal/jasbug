@@ -103,14 +103,29 @@ export async function PUT(
 
     console.log(`📝 Updating order ${orderId} to status: ${status}`);
 
-    const { data: updateData, error: updateError } = await supabaseAdmin
+    // Try update by ID first
+    let { data: updateData, error: updateError } = await supabaseAdmin
       .from('orders')
       .update({ status, updated_at: new Date().toISOString() })
-      .or(`id.eq.${orderId},custom_id.eq.${orderId}`)
+      .eq('id', orderId)
       .select();
+
+    // If not found by ID, try by custom_id
+    if (updateError && updateError.code === 'PGRST116') {
+      console.log('Not found by ID, trying custom_id...');
+      const result = await supabaseAdmin
+        .from('orders')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('custom_id', orderId)
+        .select();
+      
+      updateData = result.data;
+      updateError = result.error;
+    }
 
     if (updateError) {
       console.error('❌ Update order error:', updateError);
+      console.error('Error details:', JSON.stringify(updateError, null, 2));
       return NextResponse.json(
         { error: 'Gagal update status order', details: updateError },
         { status: 500 }
