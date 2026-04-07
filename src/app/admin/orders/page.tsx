@@ -145,6 +145,7 @@ export default function AdminOrdersPage() {
     pending: 'bg-yellow-900/50 border-yellow-500/50 text-yellow-400',
     berhasil: 'bg-green-900/50 border-green-500/50 text-green-400',
     gagal: 'bg-red-900/50 border-red-500/50 text-red-400',
+    expired: 'bg-orange-900/50 border-orange-500/50 text-orange-400',
   };
 
   return (
@@ -210,6 +211,7 @@ export default function AdminOrdersPage() {
               <option value="pending">Pending</option>
               <option value="berhasil">Berhasil</option>
               <option value="gagal">Gagal</option>
+              <option value="expired">Expired</option>
             </select>
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <span>Menampilkan: {paginatedOrders.length} dari {filteredOrders.length} orders (Total: {orders.length})</span>
@@ -270,6 +272,7 @@ export default function AdminOrdersPage() {
                             {order.status === 'pending' && '⏳ '}
                             {order.status === 'berhasil' && '✅ '}
                             {order.status === 'gagal' && '❌ '}
+                            {order.status === 'expired' && '⏰ '}
                             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                           </span>
                         </div>
