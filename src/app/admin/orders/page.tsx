@@ -97,24 +97,16 @@ export default function AdminOrdersPage() {
 
     fetchOrders();
 
-    const channel = supabase
-      .channel('admin-all-orders')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-        console.log('🔄 Admin: Realtime update detected, refetching orders...');
-        fetchOrders();
-      })
-      .subscribe();
-
-    // BACKUP: Polling setiap 15 detik untuk memastikan data terupdate
+    // NOTE: Realtime WebSocket is blocked by CSP, so we use polling only
+    // Polling setiap 15 detik untuk memastikan data selalu terupdate
     const pollingInterval = setInterval(() => {
       console.log('📡 Admin: Polling - Refetching orders...');
       fetchOrders();
     }, 15000); // 15 seconds
 
     return () => {
-      supabase.removeChannel(channel);
       clearInterval(pollingInterval);
-      console.log('Cleanup admin orders subscriptions');
+      console.log('Cleanup admin orders polling');
     };
   }, []);
 

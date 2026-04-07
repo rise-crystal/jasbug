@@ -51,33 +51,16 @@ export default function OrdersPage() {
 
     fetchOrders();
 
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('orders-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders',
-        },
-        () => {
-          console.log('🔄 Realtime update detected, refetching orders...');
-          fetchOrders();
-        }
-      )
-      .subscribe();
-
-    // BACKUP: Polling setiap 10 detik untuk memastikan data terupdate
+    // NOTE: Realtime WebSocket is blocked by CSP, so we use polling only
+    // Polling setiap 10 detik untuk memastikan data selalu terupdate
     const pollingInterval = setInterval(() => {
       console.log('📡 Polling: Refetching orders to ensure data is up-to-date...');
       fetchOrders();
     }, 10000); // 10 seconds
 
     return () => {
-      supabase.removeChannel(channel);
       clearInterval(pollingInterval);
-      console.log('Cleanup orders subscriptions');
+      console.log('Cleanup orders polling');
     };
   }, [sortBy]);
 
