@@ -62,21 +62,39 @@ export default function AdminOrdersPage() {
               try {
                 console.log('⏰ Auto-expiring order:', order.custom_id || order.id);
                 
-                const response = await fetch(`/api/payment/status/${order.id}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ status: 'expired' }),
-                });
+                // METHOD 1: Direct Supabase update
+                const { data, error } = await supabase
+                  .from('orders')
+                  .update({ 
+                    status: 'expired',
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', order.id);
 
-                const result = await response.json();
+                if (error) {
+                  console.error('❌ Direct Supabase error:', error);
+                  console.log('🔄 Falling back to API method...');
+                  
+                  // METHOD 2: API call fallback
+                  const response = await fetch(`/api/payment/status/${order.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'expired' }),
+                  });
 
-                if (response.ok) {
-                  console.log('✅ SUCCESS: Order expired in database');
-                  return { ...order, status: 'expired' };
-                } else {
-                  console.error('❌ FAILED: Could not auto-expire order:', result.error);
-                  return order;
+                  const result = await response.json();
+
+                  if (response.ok) {
+                    console.log('✅ SUCCESS via API method');
+                    return { ...order, status: 'expired' };
+                  } else {
+                    console.error('❌ FAILED: API error:', result.error);
+                    return order;
+                  }
                 }
+
+                console.log('✅ SUCCESS: Order expired in database via Direct Supabase');
+                return { ...order, status: 'expired' };
               } catch (error) {
                 console.error('❌ FAILED: Auto-expire error:', error);
                 return order;

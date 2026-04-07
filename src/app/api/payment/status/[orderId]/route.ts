@@ -98,18 +98,23 @@ export async function PUT(
       );
     }
 
-    const { error: updateError } = await supabaseAdmin
+    console.log(`📝 Updating order ${orderId} to status: ${status}`);
+
+    const { data: updateData, error: updateError } = await supabaseAdmin
       .from('orders')
-      .update({ status })
-      .or(`id.eq.${orderId},custom_id.eq.${orderId}`);
+      .update({ status, updated_at: new Date().toISOString() })
+      .or(`id.eq.${orderId},custom_id.eq.${orderId}`)
+      .select();
 
     if (updateError) {
-      console.error('Update order error:', updateError);
+      console.error('❌ Update order error:', updateError);
       return NextResponse.json(
-        { error: 'Gagal update status order' },
+        { error: 'Gagal update status order', details: updateError },
         { status: 500 }
       );
     }
+
+    console.log('✅ Update successful:', updateData);
 
     return NextResponse.json({
       success: true,
