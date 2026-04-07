@@ -48,6 +48,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
+      <head>
+        {/* Open Graph / WhatsApp Preview */}
+        <meta property="og:title" content="⚠️ POWER BUG - Jasa Bug WhatsApp Terkuat & Terganas!" />
+        <meta property="og:description" content="🔥 Hancurkan Sistem WhatsApp Target! Bug paling ganas dan mematikan yang akan merusak sistem WhatsApp mereka secara permanen. Deploy sekarang hanya Rp 10.000!" />
+        <meta property="og:image" content="https://www.tarlogic.com/wp-content/uploads/2024/02/Tipos-de-malware-1200x900.webp" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="900" />
+        <meta property="og:image:alt" content="Power Bug - Senjata Digital Paling Mematikan" />
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="id_ID" />
+        <meta property="og:site_name" content="Power Bug" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="⚠️ POWER BUG - Jasa Bug WhatsApp Terkuat & Terganas!" />
+        <meta name="twitter:description" content="🔥 Hancurkan Sistem WhatsApp Target! Bug paling ganas dan mematikan yang akan merusak sistem WhatsApp mereka secara permanen. Deploy sekarang hanya Rp 10.000!" />
+        <meta name="twitter:image" content="https://www.tarlogic.com/wp-content/uploads/2024/02/Tipos-de-malware-1200x900.webp" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
