@@ -80,8 +80,14 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       console.error('Update order error:', updateError);
+      console.error('Order ID:', orderId);
+      console.error('Proof URL:', proofUrl);
       return NextResponse.json(
-        { error: 'Gagal update order' },
+        { 
+          error: 'Gagal update order', 
+          details: updateError.message,
+          code: updateError.code 
+        },
         { status: 500 }
       );
     }
