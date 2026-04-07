@@ -47,15 +47,15 @@ export default function AdminOrdersPage() {
         .order('created_at', { ascending: false });
 
       if (data) {
-        // Auto-expire order yang sudah lewat 5 menit tanpa bukti pembayaran
+        // Auto-expire order yang sudah lewat 1 menit tanpa bukti pembayaran (TESTING MODE)
         const now = Date.now();
-        const fiveMinutes = 5 * 60 * 1000;
+        const oneMinute = 1 * 60 * 1000; // 1 minute in milliseconds (TESTING MODE)
 
         const processedOrders = await Promise.all(
           data.map(async (order) => {
             const createdAt = new Date(order.created_at).getTime();
             const elapsed = now - createdAt;
-            const remaining = fiveMinutes - elapsed;
+            const remaining = oneMinute - elapsed;
 
             // Jika sudah expired dan belum ada bukti, auto-set ke expired
             if (remaining <= 0 && !order.payment_proof_url && order.status === 'pending') {

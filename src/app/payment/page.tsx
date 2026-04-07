@@ -54,8 +54,8 @@ function PaymentContent() {
       const createdAt = new Date(selectedOrder.created_at).getTime();
       const now = Date.now();
       const elapsed = now - createdAt;
-      const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
-      const remaining = fiveMinutes - elapsed;
+      const oneMinute = 1 * 60 * 1000; // 1 minute in milliseconds (TESTING MODE)
+      const remaining = oneMinute - elapsed;
 
       if (remaining <= 0 && !hasUpdated) {
         // Jika sudah upload bukti, jangan auto-gagal
