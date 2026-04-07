@@ -457,52 +457,43 @@ function PaymentContent() {
 
                 {selectedOrder.payment_proof_url ? (
                   <div className="space-y-4">
-                    {/* Preview Bukti */}
+                    {/* Bukti Terupload - Hanya Button */}
                     <div className="bg-gray-900 rounded-lg p-4 border border-purple-500/30">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm sm:text-base text-white font-bold">✅ Bukti Pembayaran Terupload</span>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                        <div>
+                          <p className="text-sm sm:text-base text-white font-bold">✅ Bukti Pembayaran Terupload</p>
+                          <p className="text-xs text-gray-400 mt-1">Klik tombol untuk melihat detail bukti transfer</p>
+                        </div>
                         <button
                           onClick={() => setPreviewFile(selectedOrder.payment_proof_url)}
-                          className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-4 rounded-lg transition"
+                          className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-sm font-bold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2"
                         >
-                          🔍 Lihat Ukuran Penuh
+                          👁️ Lihat Bukti Pembayaran
                         </button>
-                      </div>
-                      
-                      {/* Preview Image */}
-                      <div className="relative rounded-lg overflow-hidden border-2 border-purple-500/50">
-                        <img
-                          src={selectedOrder.payment_proof_url}
-                          alt="Bukti Pembayaran"
-                          className="w-full h-auto object-contain bg-gray-800"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
                       </div>
 
                       {/* Status Verifikasi */}
-                      <div className="mt-3 flex items-center gap-3">
-                        {selectedOrder.payment_proof_verified ? (
-                          <div className="flex-1 bg-green-900/50 border border-green-500/50 rounded-lg p-3 flex items-center gap-3">
-                            <div className="text-2xl">✅</div>
-                            <div>
-                              <p className="text-green-400 font-bold text-sm">Pembayaran Terverifikasi!</p>
-                              {selectedOrder.payment_proof_verified_at && (
-                                <p className="text-green-300 text-xs mt-1">
-                                  Diverifikasi: {new Date(selectedOrder.payment_proof_verified_at).toLocaleString('id-ID')}
-                                </p>
-                              )}
-                            </div>
+                      {selectedOrder.payment_proof_verified ? (
+                        <div className="bg-green-900/50 border border-green-500/50 rounded-lg p-3 flex items-center gap-3">
+                          <div className="text-2xl">✅</div>
+                          <div>
+                            <p className="text-green-400 font-bold text-sm">Pembayaran Terverifikasi!</p>
+                            {selectedOrder.payment_proof_verified_at && (
+                              <p className="text-green-300 text-xs mt-1">
+                                Diverifikasi: {new Date(selectedOrder.payment_proof_verified_at).toLocaleString('id-ID')}
+                              </p>
+                            )}
                           </div>
-                        ) : (
-                          <div className="flex-1 bg-yellow-900/50 border border-yellow-500/50 rounded-lg p-3 flex items-center gap-3">
-                            <div className="text-2xl animate-pulse">⏳</div>
-                            <div>
-                              <p className="text-yellow-400 font-bold text-sm">Menunggu Verifikasi Admin</p>
-                              <p className="text-yellow-300 text-xs mt-1">Admin sedang memeriksa bukti Anda</p>
-                            </div>
+                        </div>
+                      ) : (
+                        <div className="bg-yellow-900/50 border border-yellow-500/50 rounded-lg p-3 flex items-center gap-3">
+                          <div className="text-2xl animate-pulse">⏳</div>
+                          <div>
+                            <p className="text-yellow-400 font-bold text-sm">Menunggu Verifikasi Admin</p>
+                            <p className="text-yellow-300 text-xs mt-1">Admin sedang memeriksa bukti Anda</p>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Peringatan Penting */}
