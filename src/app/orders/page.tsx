@@ -158,19 +158,42 @@ export default function OrdersPage() {
             </div>
             <div className="bg-gray-800 rounded-lg p-2 sm:p-3 border border-yellow-500/30 text-center">
               <div className="text-xl sm:text-2xl font-black text-yellow-400">{stats.pending}</div>
-              <div className="text-xs text-gray-400">Pending</div>
+              <div className="text-xs text-gray-400">Menunggu Bayar</div>
             </div>
             <div className="bg-gray-800 rounded-lg p-2 sm:p-3 border border-green-500/30 text-center">
               <div className="text-xl sm:text-2xl font-black text-green-400">{stats.berhasil}</div>
-              <div className="text-xs text-gray-400">Berhasil</div>
+              <div className="text-xs text-gray-400">Bug Terkirim ✓</div>
             </div>
             <div className="bg-gray-800 rounded-lg p-2 sm:p-3 border border-red-500/30 text-center">
               <div className="text-xl sm:text-2xl font-black text-red-400">{stats.gagal}</div>
-              <div className="text-xs text-gray-400">Gagal</div>
+              <div className="text-xs text-gray-400">Ditolak Admin</div>
             </div>
             <div className="bg-gray-800 rounded-lg p-2 sm:p-3 border border-orange-500/30 text-center">
               <div className="text-xl sm:text-2xl font-black text-orange-400">{stats.expired}</div>
-              <div className="text-xs text-gray-400">Expired</div>
+              <div className="text-xs text-gray-400">Expired/Gagal</div>
+            </div>
+          </div>
+
+          {/* Status Legend */}
+          <div className="mt-4 pt-4 border-t border-gray-800">
+            <p className="text-xs text-gray-400 mb-2 font-bold">📋 Keterangan Status:</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div className="flex items-start gap-2">
+                <span className="text-yellow-400 font-bold">⏳ Pending</span>
+                <span className="text-gray-500">- Menunggu pembayaran dari customer</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-green-400 font-bold">✅ Berhasil</span>
+                <span className="text-gray-500">- Bug berhasil terkirim ke nomor tujuan</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-red-400 font-bold">❌ Gagal</span>
+                <span className="text-gray-500">- Pembayaran ditolak oleh admin</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-orange-400 font-bold">⏰ Expired</span>
+                <span className="text-gray-500">- Pembayaran expired/gagal (waktu habis atau masalah lain)</span>
+              </div>
             </div>
           </div>
         </div>
@@ -303,12 +326,18 @@ export default function OrdersPage() {
                             className={`px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-bold border ${
                               statusStyles[order.status as keyof typeof statusStyles] || 'bg-gray-800 border-gray-600 text-gray-400'
                             }`}
+                            title={
+                              order.status === 'pending' ? 'Menunggu pembayaran' :
+                              order.status === 'berhasil' ? 'Bug berhasil terkirim ke nomor tujuan' :
+                              order.status === 'gagal' ? 'Pembayaran ditolak oleh admin' :
+                              order.status === 'expired' ? 'Pembayaran expired/gagal - waktu habis atau masalah lain' :
+                              ''
+                            }
                           >
-                            {order.status === 'pending' && '⏳ '}
-                            {order.status === 'berhasil' && '✅ '}
-                            {order.status === 'gagal' && '❌ '}
-                            {order.status === 'expired' && '⏰ '}
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            {order.status === 'pending' && '⏳ Menunggu Pembayaran'}
+                            {order.status === 'berhasil' && '✅ Bug Terkirim'}
+                            {order.status === 'gagal' && '❌ Ditolak Admin'}
+                            {order.status === 'expired' && '⏰ Expired/Gagal'}
                           </span>
                         </div>
                       </div>

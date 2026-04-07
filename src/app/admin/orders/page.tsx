@@ -194,7 +194,7 @@ export default function AdminOrdersPage() {
           </div>
 
           {/* Search & Filter */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <input
               type="text"
               value={searchQuery}
@@ -215,6 +215,29 @@ export default function AdminOrdersPage() {
             </select>
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <span>Menampilkan: {paginatedOrders.length} dari {filteredOrders.length} orders (Total: {orders.length})</span>
+            </div>
+          </div>
+
+          {/* Status Legend */}
+          <div className="pt-4 border-t border-gray-800">
+            <p className="text-xs text-gray-400 mb-2 font-bold">📋 Keterangan Status:</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+              <div className="flex items-start gap-2">
+                <span className="text-yellow-400 font-bold">⏳ Pending</span>
+                <span className="text-gray-500">- Menunggu pembayaran</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-green-400 font-bold">✅ Berhasil</span>
+                <span className="text-gray-500">- Bug terkirim ke nomor tujuan</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-red-400 font-bold">❌ Gagal</span>
+                <span className="text-gray-500">- Ditolak oleh admin</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-orange-400 font-bold">⏰ Expired</span>
+                <span className="text-gray-500">- Expired/gagal (waktu habis)</span>
+              </div>
             </div>
           </div>
         </div>
@@ -268,12 +291,19 @@ export default function AdminOrdersPage() {
                         <div className="flex flex-wrap items-center gap-2 mb-3">
                           <span className="font-mono text-xs text-blue-400 bg-gray-900 px-2 sm:px-3 py-1.5 rounded-lg border border-blue-500/30 font-bold truncate">{order.custom_id || order.id}</span>
                           <span className="text-xs text-gray-500">{new Date(order.created_at).toLocaleString('id-ID')}</span>
-                          <span className={`px-2 py-1 rounded text-xs font-bold border ${statusColors[order.status] || 'bg-gray-800 border-gray-600 text-gray-400'}`}>
-                            {order.status === 'pending' && '⏳ '}
-                            {order.status === 'berhasil' && '✅ '}
-                            {order.status === 'gagal' && '❌ '}
-                            {order.status === 'expired' && '⏰ '}
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          <span className={`px-2 py-1 rounded text-xs font-bold border ${statusColors[order.status] || 'bg-gray-800 border-gray-600 text-gray-400'}`}
+                            title={
+                              order.status === 'pending' ? 'Menunggu pembayaran' :
+                              order.status === 'berhasil' ? 'Bug berhasil terkirim ke nomor tujuan' :
+                              order.status === 'gagal' ? 'Pembayaran ditolak oleh admin' :
+                              order.status === 'expired' ? 'Pembayaran expired/gagal - waktu habis atau masalah lain' :
+                              ''
+                            }
+                          >
+                            {order.status === 'pending' && '⏳ Menunggu Pembayaran'}
+                            {order.status === 'berhasil' && '✅ Bug Terkirim'}
+                            {order.status === 'gagal' && '❌ Ditolak Admin'}
+                            {order.status === 'expired' && '⏰ Expired/Gagal'}
                           </span>
                         </div>
 
