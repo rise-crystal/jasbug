@@ -505,29 +505,32 @@ function PaymentContent() {
                       </div>
                     </div>
 
-                    {/* Upload Ulang */}
-                    <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4">
-                      <p className="text-blue-400 text-xs sm:text-sm mb-3">
-                        💡 <strong>Ingin upload ulang?</strong> Pilih file baru untuk mengganti bukti yang sudah ada.
-                      </p>
-                      <label className="block w-full bg-gray-800 hover:bg-gray-700 border-2 border-blue-500/50 text-blue-400 text-center font-bold py-3 px-4 rounded-lg transition cursor-pointer text-sm sm:text-base">
-                        📷 Ganti Bukti Pembayaran
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              if (file.size > 5 * 1024 * 1024) {
-                                alert('❌ File terlalu besar! Maksimal 5MB');
-                                return;
-                              }
-                              await handleUploadProof(selectedOrder.id, file);
-                            }
-                          }}
-                        />
-                      </label>
+                    {/* Peringatan Penting */}
+                    <div className="bg-red-900/50 border-2 border-red-500 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="text-2xl flex-shrink-0">⚠️</div>
+                        <div>
+                          <p className="text-red-400 font-bold text-sm mb-2">PENTING - BACA DENGAN SEKSAMA!</p>
+                          <ul className="text-red-300 text-xs space-y-2">
+                            <li className="flex items-start gap-2">
+                              <span className="font-bold">•</span>
+                              <span>Anda <strong className="text-white">WAJIB</strong> mengupload bukti pembayaran yang valid (screenshot/struk transfer)</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="font-bold">•</span>
+                              <span>Jika <strong className="text-white">TIDAK UPLOAD</strong> atau file yang diupload <strong className="text-white">BUKAN bukti pembayaran</strong>, maka bug <strong className="text-white">TIDAK AKAN DIKIRIM</strong> ke target</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="font-bold">•</span>
+                              <span>Admin <strong className="text-white">TIDAK AKAN MEMPROSES</strong> order tanpa bukti pembayaran yang valid</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="font-bold">•</span>
+                              <span>Pastikan bukti transfer jelas dan bisa dibaca (tidak blur/terpotong)</span>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : isExpired ? (
