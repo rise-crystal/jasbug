@@ -258,8 +258,6 @@ function PaymentContent() {
   };
 
   const handleOrderClick = (order: Order) => {
-    console.log('Order clicked:', order);
-
     if (order.status === 'pending_pembayaran' || order.status === 'pending_konfirmasi_admin') {
       setSelectedOrder(order);
       

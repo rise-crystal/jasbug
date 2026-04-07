@@ -38,11 +38,9 @@ export async function POST(request: NextRequest) {
     console.log('Fetching order from database...');
     const { data: order, error: fetchError } = await supabaseAdmin
       .from('orders')
-      .select('*')
+      .select('id, status, product_id')
       .or(`id.eq.${orderId},custom_id.eq.${orderId}`)
       .single();
-
-    console.log('Order fetch result:', { data: order, error: fetchError });
 
     if (fetchError || !order) {
       console.error('Order not found:', fetchError);
