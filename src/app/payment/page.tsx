@@ -43,24 +43,30 @@ function PaymentContent() {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isExpired, setIsExpired] = useState(false);
 
-  // Check if order is expired (5 minutes timeout)
+  // Check if order is expired (1 minute timeout - TESTING MODE)
+  const hasUpdatedRef = { current: false }; // Use ref to prevent re-render reset
+
   useEffect(() => {
     if (!selectedOrder || !selectedOrder.created_at) return;
     if (selectedOrder.status !== 'pending') return; // Hanya check jika status masih pending
+    if (hasUpdatedRef.current) return; // Skip jika sudah updated
 
-    let hasUpdated = false; // Flag untuk mencegah multiple updates
+    let expireInterval: NodeJS.Timeout | null = null;
 
-    const checkExpiry = async () => {
+    const checkExpiry = () => {
       const createdAt = new Date(selectedOrder.created_at).getTime();
       const now = Date.now();
       const elapsed = now - createdAt;
       const oneMinute = 1 * 60 * 1000; // 1 minute in milliseconds (TESTING MODE)
       const remaining = oneMinute - elapsed;
 
-      if (remaining <= 0 && !hasUpdated) {
+      if (remaining <= 0 && !hasUpdatedRef.current) {
         // Jika sudah upload bukti, jangan auto-gagal
         if (!selectedOrder.payment_proof_url && selectedOrder.status === 'pending') {
-          hasUpdated = true; // Set flag agar tidak update berkali-kali
+          hasUpdatedRef.current = true; // Set ref agar tidak update berkali-kali
+          
+          if (expireInterval) clearInterval(expireInterval);
+          
           setIsExpired(true);
           setTimeLeft(0);
 
@@ -72,37 +78,32 @@ function PaymentContent() {
 
           // IMPORTANT: MUST use API endpoint (has admin access with service role key)
           // Direct Supabase client won't work due to RLS restrictions
-          try {
-            console.log('📝 Calling API to update status to expired...');
-            
-            const response = await fetch(`/api/payment/status/${selectedOrder.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'expired' }),
+          fetch(`/api/payment/status/${selectedOrder.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'expired' }),
+          })
+            .then(res => res.json())
+            .then(result => {
+              console.log('API Response:', result);
+
+              if (result.success) {
+                console.log('✅ SUCCESS: Database updated to expired');
+                
+                // Update states setelah berhasil
+                setSelectedOrder(prev => prev ? { ...prev, status: 'expired' } : null);
+                setOrders(prev => prev.map(o => 
+                  o.id === selectedOrder.id ? { ...o, status: 'expired' } : o
+                ));
+                
+                console.log('✅ UI updated to expired');
+              } else {
+                console.error('❌ FAILED: API returned error:', result.error);
+              }
+            })
+            .catch(error => {
+              console.error('❌ FAILED: Network error during auto-expire:', error);
             });
-
-            const result = await response.json();
-            console.log('API Response Status:', response.status);
-            console.log('API Response Data:', result);
-
-            if (response.ok) {
-              console.log('✅ SUCCESS: Database updated to expired');
-              
-              // Update states setelah berhasil
-              setSelectedOrder(prev => prev ? { ...prev, status: 'expired' } : null);
-              setOrders(prev => prev.map(o => 
-                o.id === selectedOrder.id ? { ...o, status: 'expired' } : o
-              ));
-              
-              console.log('✅ UI updated to expired');
-            } else {
-              console.error('❌ FAILED: API returned error:', result.error);
-              hasUpdated = false; // Reset flag untuk retry
-            }
-          } catch (error) {
-            console.error('❌ FAILED: Network error during auto-expire:', error);
-            hasUpdated = false; // Reset flag untuk retry
-          }
         } else if (selectedOrder.payment_proof_url) {
           // Sudah upload bukti, stop timer tapi jangan auto-gagal
           console.log('✅ Payment proof uploaded, stopping timer');
@@ -111,20 +112,17 @@ function PaymentContent() {
         }
       } else if (remaining > 0) {
         setTimeLeft(Math.floor(remaining / 1000)); // seconds
-        if (Math.floor(remaining / 1000) % 60 === 0) { // Log setiap menit
-          console.log('⏳ Time remaining:', Math.floor(remaining / 1000), 'seconds');
-        }
       }
     };
 
     checkExpiry();
-    const interval = setInterval(checkExpiry, 1000); // Check every second
+    expireInterval = setInterval(checkExpiry, 5000); // Check every 5 seconds (not 1 second!)
 
     return () => {
-      clearInterval(interval);
+      if (expireInterval) clearInterval(expireInterval);
       console.log('Cleanup expiry check interval');
     };
-  }, [selectedOrder]);
+  }, [selectedOrder?.id]); // Only depend on order ID, not whole object
 
   const updateOrderStatus = async (orderId: string, status: 'pending' | 'berhasil' | 'gagal' | 'expired') => {
     try {
