@@ -95,44 +95,35 @@ export async function PUT(
 
     const supabaseAdmin = getSupabaseAdmin();
     if (!supabaseAdmin) {
+      console.error('❌ CRITICAL: Supabase admin client is NULL!');
+      console.error('Check: SUPABASE_SERVICE_ROLE_KEY environment variable');
       return NextResponse.json(
-        { error: 'Database tidak terkonfigurasi' },
+        { error: 'Database tidak terkonfigurasi - Missing service role key' },
         { status: 500 }
       );
     }
 
     console.log(`📝 Updating order ${orderId} to status: ${status}`);
 
-    // Try update by ID first
-    let { data: updateData, error: updateError } = await supabaseAdmin
+    // Try update by ID first (simple .eq() - most reliable)
+    const { data: updateData, error: updateError } = await supabaseAdmin
       .from('orders')
       .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', orderId)
-      .select();
-
-    // If not found by ID, try by custom_id
-    if (updateError && updateError.code === 'PGRST116') {
-      console.log('Not found by ID, trying custom_id...');
-      const result = await supabaseAdmin
-        .from('orders')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('custom_id', orderId)
-        .select();
-      
-      updateData = result.data;
-      updateError = result.error;
-    }
+      .eq('id', orderId);
 
     if (updateError) {
-      console.error('❌ Update order error:', updateError);
+      console.error('❌ Update failed!');
+      console.error('Error code:', updateError.code);
+      console.error('Error message:', updateError.message);
       console.error('Error details:', JSON.stringify(updateError, null, 2));
+      
       return NextResponse.json(
         { error: 'Gagal update status order', details: updateError },
         { status: 500 }
       );
     }
 
-    console.log('✅ Update successful:', updateData);
+    console.log('✅ Update successful');
 
     return NextResponse.json({
       success: true,
