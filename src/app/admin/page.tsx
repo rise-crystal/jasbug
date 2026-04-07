@@ -55,18 +55,18 @@ export default function AdminPage() {
             const elapsed = now - createdAt;
             const remaining = fiveMinutes - elapsed;
             
-            // Jika sudah expired dan belum ada bukti, auto-set ke gagal
+            // Jika sudah expired dan belum ada bukti, auto-set ke expired
             if (remaining <= 0 && !order.payment_proof_url && order.status === 'pending') {
               try {
-                const response = await fetch(`/api/payment/verify/${order.id}`, {
+                const response = await fetch(`/api/payment/status/${order.id}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ verified: false }),
+                  body: JSON.stringify({ status: 'expired' }),
                 });
-                
+
                 if (response.ok) {
                   console.log('✅ Auto-expire order:', order.custom_id || order.id);
-                  return { ...order, status: 'gagal' };
+                  return { ...order, status: 'expired' };
                 }
               } catch (error) {
                 console.error('Auto-expire error:', error);

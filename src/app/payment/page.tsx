@@ -60,21 +60,12 @@ function PaymentContent() {
           setIsExpired(true);
           setTimeLeft(0);
           
-          // Auto-update status ke gagal
+          // Auto-update status ke expired
           try {
-            const response = await fetch(`/api/payment/verify/${selectedOrder.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ verified: false }),
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              console.log('✅ Auto-expire order:', data.message);
-              
-              // Update selectedOrder state
-              setSelectedOrder(prev => prev ? { ...prev, status: 'gagal' as string } : null);
-            }
+            await updateOrderStatus(selectedOrder.id, 'expired');
+
+            // Update selectedOrder state
+            setSelectedOrder(prev => prev ? { ...prev, status: 'expired' as string } : null);
           } catch (error) {
             console.error('Auto-expire error:', error);
           }
@@ -94,7 +85,7 @@ function PaymentContent() {
     return () => clearInterval(interval);
   }, [selectedOrder]);
 
-  const updateOrderStatus = async (orderId: string, status: 'pending' | 'berhasil' | 'gagal') => {
+  const updateOrderStatus = async (orderId: string, status: 'pending' | 'berhasil' | 'gagal' | 'expired') => {
     try {
       const response = await fetch(`/api/payment/status/${orderId}`, {
         method: 'PUT',
@@ -223,6 +214,7 @@ function PaymentContent() {
             order.id === orderId ? data.order : order
           ));
 
+          // Stop polling if status is final (not pending)
           if (data.order.status !== 'pending') {
             clearInterval(interval);
             setPollingInterval(null);
@@ -612,7 +604,7 @@ function PaymentContent() {
               </div>
 
               {/* Status */}
-              {selectedOrder.status !== 'gagal' && (
+              {selectedOrder.status !== 'gagal' && selectedOrder.status !== 'expired' && (
                 <div className={`rounded-xl p-3 sm:p-4 text-center ${
                   selectedOrder.status === 'berhasil'
                     ? 'bg-green-900/50 border-2 border-green-500'
@@ -622,11 +614,15 @@ function PaymentContent() {
                 }`}>
                   <p className={`text-sm sm:text-lg font-black ${
                     selectedOrder.status === 'berhasil' ? 'text-green-400' :
+                    selectedOrder.status === 'expired' ? 'text-red-400' :
+                    selectedOrder.status === 'gagal' ? 'text-red-400' :
                     selectedOrder.payment_proof_url ? 'text-purple-400' : 'text-yellow-400'
                   }`}>
                     {selectedOrder.status === 'pending' && !selectedOrder.payment_proof_url && '⏳ Menunggu Pembayaran'}
                     {selectedOrder.status === 'pending' && selectedOrder.payment_proof_url && '📋 Menunggu Verifikasi Admin'}
                     {selectedOrder.status === 'berhasil' && '✅ Pembayaran Berhasil'}
+                    {selectedOrder.status === 'expired' && '⏰ Pembayaran Expired'}
+                    {selectedOrder.status === 'gagal' && '❌ Pembayaran Ditolak'}
                   </p>
                   {selectedOrder.payment_proof_url && selectedOrder.status === 'pending' && (
                     <p className="text-purple-300 text-xs mt-2">
@@ -645,6 +641,26 @@ function PaymentContent() {
                       )}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Expired/Gagal Status */}
+              {(selectedOrder.status === 'expired' || selectedOrder.status === 'gagal') && (
+                <div className="bg-red-900/50 border-2 border-red-500 rounded-xl p-3 sm:p-4 text-center">
+                  <p className="text-red-400 text-sm sm:text-lg font-black">
+                    {selectedOrder.status === 'expired' ? '⏰ Pembayaran Expired' : '❌ Pembayaran Ditolak'}
+                  </p>
+                  <p className="text-red-300 text-xs mt-2">
+                    {selectedOrder.status === 'expired' 
+                      ? 'Waktu pembayaran sudah habis. Silakan buat order baru.'
+                      : 'Pembayaran ditolak oleh admin. Silakan buat order baru.'}
+                  </p>
+                  <a
+                    href="/"
+                    className="inline-block mt-4 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold py-2 px-6 rounded-lg transition text-sm sm:text-base"
+                  >
+                    🚀 Buat Order Baru
+                  </a>
                 </div>
               )}
 

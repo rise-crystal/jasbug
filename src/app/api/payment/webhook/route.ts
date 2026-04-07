@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Map status dari provider ke status di database
-    const statusMap: Record<string, 'pending' | 'berhasil' | 'gagal'> = {
+    const statusMap: Record<string, 'pending' | 'berhasil' | 'gagal' | 'expired'> = {
       'success': 'berhasil',
       'failed': 'gagal',
       'pending': 'pending',
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       'capture': 'berhasil',
       'deny': 'gagal',
       'cancel': 'gagal',
-      'expire': 'gagal',
+      'expire': 'expired',
     };
 
     const dbStatus = statusMap[status.toLowerCase()];

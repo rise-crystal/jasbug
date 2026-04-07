@@ -112,6 +112,7 @@ export default function OrdersPage() {
     pending: orders.filter(o => o.status === 'pending').length,
     berhasil: orders.filter(o => o.status === 'berhasil').length,
     gagal: orders.filter(o => o.status === 'gagal').length,
+    expired: orders.filter(o => o.status === 'expired').length,
   }), [orders]);
 
   if (loading) {
@@ -167,6 +168,10 @@ export default function OrdersPage() {
               <div className="text-xl sm:text-2xl font-black text-red-400">{stats.gagal}</div>
               <div className="text-xs text-gray-400">Gagal</div>
             </div>
+            <div className="bg-gray-800 rounded-lg p-2 sm:p-3 border border-orange-500/30 text-center">
+              <div className="text-xl sm:text-2xl font-black text-orange-400">{stats.expired}</div>
+              <div className="text-xs text-gray-400">Expired</div>
+            </div>
           </div>
         </div>
 
@@ -197,6 +202,7 @@ export default function OrdersPage() {
                 <option value="pending">Pending</option>
                 <option value="berhasil">Berhasil</option>
                 <option value="gagal">Gagal</option>
+                <option value="expired">Expired</option>
               </select>
             </div>
 
@@ -251,6 +257,7 @@ export default function OrdersPage() {
                     pending: 'bg-yellow-900/50 border-yellow-500/50 text-yellow-400',
                     berhasil: 'bg-green-900/50 border-green-500/50 text-green-400',
                     gagal: 'bg-red-900/50 border-red-500/50 text-red-400',
+                    expired: 'bg-orange-900/50 border-orange-500/50 text-orange-400',
                   };
 
                   return (
@@ -300,6 +307,7 @@ export default function OrdersPage() {
                             {order.status === 'pending' && '⏳ '}
                             {order.status === 'berhasil' && '✅ '}
                             {order.status === 'gagal' && '❌ '}
+                            {order.status === 'expired' && '⏰ '}
                             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                           </span>
                         </div>

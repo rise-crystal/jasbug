@@ -82,10 +82,10 @@ export async function PUT(
       );
     }
 
-    const validStatuses = ['pending', 'berhasil', 'gagal'];
+    const validStatuses = ['pending', 'berhasil', 'gagal', 'expired'];
     if (!validStatuses.includes(status)) {
       return NextResponse.json(
-        { error: 'Status tidak valid. Gunakan: pending, berhasil, gagal' },
+        { error: 'Status tidak valid. Gunakan: pending, berhasil, gagal, expired' },
         { status: 400 }
       );
     }

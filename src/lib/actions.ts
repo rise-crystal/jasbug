@@ -89,7 +89,7 @@ export async function createOrder(phoneNumber: string, productId?: string) {
 
 export async function updateOrderStatus(
   orderId: string,
-  status: 'pending' | 'berhasil' | 'gagal'
+  status: 'pending' | 'berhasil' | 'gagal' | 'expired'
 ) {
   try {
     const supabaseAdmin = getSupabaseAdmin();
@@ -98,7 +98,7 @@ export async function updateOrderStatus(
     }
 
     // Validasi status
-    const validStatuses = ['pending', 'berhasil', 'gagal'];
+    const validStatuses = ['pending', 'berhasil', 'gagal', 'expired'];
     if (!validStatuses.includes(status)) {
       return { error: 'Status tidak valid' };
     }
