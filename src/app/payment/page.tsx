@@ -49,7 +49,8 @@ function PaymentContent() {
 
   useEffect(() => {
     if (!selectedOrder || !selectedOrder.created_at) return;
-    if (selectedOrder.status !== 'pending') return;
+    // Hanya jalankan timer untuk status pending_pembayaran
+    if (selectedOrder.status !== 'pending_pembayaran') return;
     if (hasUpdatedRef.current) return;
 
     // Store createdAt in ref to avoid recalculation on re-renders
@@ -111,7 +112,7 @@ function PaymentContent() {
     };
   }, [selectedOrder?.id, selectedOrder?.payment_proof_url]);
 
-  const updateOrderStatus = async (orderId: string, status: 'pending' | 'berhasil' | 'gagal' | 'expired') => {
+  const updateOrderStatus = async (orderId: string, status: 'pending_pembayaran' | 'pending_konfirmasi_admin' | 'berhasil' | 'gagal' | 'expired') => {
     try {
       const response = await fetch(`/api/payment/status/${orderId}`, {
         method: 'PUT',
@@ -146,7 +147,7 @@ function PaymentContent() {
         .or(`id.eq.${orderParam},custom_id.eq.${orderParam}`)
         .single();
 
-      if (data && data.status === 'pending') {
+      if (data && (data.status === 'pending_pembayaran' || data.status === 'pending_konfirmasi_admin')) {
         setOrders([data]);
         handleOrderClick(data);
       }
@@ -241,7 +242,7 @@ function PaymentContent() {
           ));
 
           // Stop polling if status is final (not pending)
-          if (data.order.status !== 'pending') {
+          if (data.order.status !== 'pending_pembayaran' && data.order.status !== 'pending_konfirmasi_admin') {
             clearInterval(interval);
             setPollingInterval(null);
             setQrCodeDataUrl(null);
@@ -258,8 +259,8 @@ function PaymentContent() {
 
   const handleOrderClick = (order: Order) => {
     console.log('Order clicked:', order);
-    
-    if (order.status === 'pending') {
+
+    if (order.status === 'pending_pembayaran' || order.status === 'pending_konfirmasi_admin') {
       setSelectedOrder(order);
       
       if (order.qris_string) {
@@ -300,15 +301,15 @@ function PaymentContent() {
 
       setOrders(prev => prev.map(order =>
         order.id === orderId
-          ? { ...order, payment_proof_url: data.proofUrl, status: 'pending' }
+          ? { ...order, payment_proof_url: data.proofUrl, status: 'pending_konfirmasi_admin' }
           : order
       ));
 
       if (selectedOrder?.id === orderId) {
-        setSelectedOrder(prev => prev ? { 
-          ...prev, 
+        setSelectedOrder(prev => prev ? {
+          ...prev,
           payment_proof_url: data.proofUrl,
-          status: 'pending' // Auto reset ke pending untuk verifikasi admin
+          status: 'pending_konfirmasi_admin' // Set status ke pending_konfirmasi_admin untuk verifikasi admin
         } : null);
         
         // Stop timer karena sudah upload bukti
@@ -389,10 +390,21 @@ function PaymentContent() {
                   <span className="text-xs text-gray-500">
                     {new Date(selectedOrder.created_at).toLocaleString('id-ID')}
                   </span>
+                  {/* Badge status */}
+                  {selectedOrder.status === 'pending_konfirmasi_admin' && (
+                    <span className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-1 rounded-full border border-yellow-500/30">
+                      ⏳ Menunggu Konfirmasi Admin
+                    </span>
+                  )}
+                  {selectedOrder.status === 'pending_pembayaran' && (
+                    <span className="bg-orange-500/20 text-orange-400 text-xs font-bold px-2 py-1 rounded-full border border-orange-500/30">
+                      💳 Menunggu Pembayaran
+                    </span>
+                  )}
                 </div>
 
                 {/* Countdown Timer - Hide if already uploaded proof */}
-                {selectedOrder.status === 'pending' && !isExpired && !selectedOrder.payment_proof_url && (
+                {selectedOrder.status === 'pending_pembayaran' && !isExpired && !selectedOrder.payment_proof_url && (
                   <div className={`rounded-lg p-3 mb-3 text-center ${
                     timeLeft < 60
                       ? 'bg-red-900/50 border-2 border-red-500 animate-pulse'
@@ -644,13 +656,13 @@ function PaymentContent() {
                     selectedOrder.status === 'gagal' ? 'text-red-400' :
                     selectedOrder.payment_proof_url ? 'text-purple-400' : 'text-yellow-400'
                   }`}>
-                    {selectedOrder.status === 'pending' && !selectedOrder.payment_proof_url && '⏳ Menunggu Pembayaran'}
-                    {selectedOrder.status === 'pending' && selectedOrder.payment_proof_url && '📋 Menunggu Verifikasi Admin'}
+                    {selectedOrder.status === 'pending_pembayaran' && !selectedOrder.payment_proof_url && '⏳ Menunggu Pembayaran'}
+                    {selectedOrder.status === 'pending_konfirmasi_admin' && '📋 Menunggu Verifikasi Admin'}
                     {selectedOrder.status === 'berhasil' && '✅ Pembayaran Berhasil'}
                     {selectedOrder.status === 'expired' && '⏰ Pembayaran Expired'}
                     {selectedOrder.status === 'gagal' && '❌ Pembayaran Ditolak'}
                   </p>
-                  {selectedOrder.payment_proof_url && selectedOrder.status === 'pending' && (
+                  {selectedOrder.status === 'pending_konfirmasi_admin' && (
                     <p className="text-purple-300 text-xs mt-2">
                       Bukti sudah diupload • Admin sedang memeriksa
                     </p>

@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Cek jika order sudah dibayar
-    if (order.status !== 'pending') {
+    // Cek jika order sudah dibayar atau sedang dalam proses verifikasi
+    if (order.status !== 'pending_pembayaran' && order.status !== 'pending_konfirmasi_admin') {
       return NextResponse.json(
         { error: `Order sudah ${order.status}, tidak bisa diproses lagi` },
         { status: 400 }

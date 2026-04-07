@@ -58,7 +58,7 @@ export default function AdminOrdersPage() {
             const remaining = fiveMinutes - elapsed;
 
             // Jika sudah expired dan belum ada bukti, auto-set ke expired
-            if (remaining <= 0 && !order.payment_proof_url && order.status === 'pending') {
+            if (remaining <= 0 && !order.payment_proof_url && order.status === 'pending_pembayaran') {
               try {
                 console.log('⏰ Auto-expiring order:', order.custom_id || order.id);
                 console.log('📝 Calling API to update status to expired...');
@@ -186,7 +186,8 @@ export default function AdminOrdersPage() {
   }, [searchQuery, filterStatus, rowsPerPage]);
 
   const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-900/50 border-yellow-500/50 text-yellow-400',
+    pending_pembayaran: 'bg-yellow-900/50 border-yellow-500/50 text-yellow-400',
+    pending_konfirmasi_admin: 'bg-orange-900/50 border-orange-500/50 text-orange-400',
     berhasil: 'bg-green-900/50 border-green-500/50 text-green-400',
     gagal: 'bg-red-900/50 border-red-500/50 text-red-400',
     expired: 'bg-orange-900/50 border-orange-500/50 text-orange-400',
@@ -355,14 +356,16 @@ export default function AdminOrdersPage() {
                           <span className="text-xs text-gray-500">{new Date(order.created_at).toLocaleString('id-ID')}</span>
                           <span className={`px-2 py-1 rounded text-xs font-bold border ${statusColors[order.status] || 'bg-gray-800 border-gray-600 text-gray-400'}`}
                             title={
-                              order.status === 'pending' ? 'Menunggu pembayaran' :
+                              order.status === 'pending_pembayaran' ? 'Menunggu pembayaran' :
+                              order.status === 'pending_konfirmasi_admin' ? 'Menunggu verifikasi admin' :
                               order.status === 'berhasil' ? 'Bug berhasil terkirim ke nomor tujuan' :
                               order.status === 'gagal' ? 'Pembayaran ditolak oleh admin' :
                               order.status === 'expired' ? 'Pembayaran expired/gagal - waktu habis atau masalah lain' :
                               ''
                             }
                           >
-                            {order.status === 'pending' && '⏳ Menunggu Pembayaran'}
+                            {order.status === 'pending_pembayaran' && '⏳ Menunggu Pembayaran'}
+                            {order.status === 'pending_konfirmasi_admin' && '📋 Menunggu Verifikasi Admin'}
                             {order.status === 'berhasil' && '✅ Bug Terkirim'}
                             {order.status === 'gagal' && '❌ Ditolak Admin'}
                             {order.status === 'expired' && '⏰ Expired/Gagal'}

@@ -68,10 +68,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Map status dari provider ke status di database
-    const statusMap: Record<string, 'pending' | 'berhasil' | 'gagal' | 'expired'> = {
+    const statusMap: Record<string, 'pending_pembayaran' | 'pending_konfirmasi_admin' | 'berhasil' | 'gagal' | 'expired'> = {
       'success': 'berhasil',
       'failed': 'gagal',
-      'pending': 'pending',
+      'pending': 'pending_pembayaran',
       'settlement': 'berhasil',
       'capture': 'berhasil',
       'deny': 'gagal',

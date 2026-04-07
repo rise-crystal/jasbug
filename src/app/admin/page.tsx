@@ -41,7 +41,7 @@ export default function AdminPage() {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('status', 'pending')
+        .in('status', ['pending_pembayaran', 'pending_konfirmasi_admin'])
         .order('created_at', { ascending: false });
 
       if (data) {
@@ -56,11 +56,11 @@ export default function AdminPage() {
             const remaining = fiveMinutes - elapsed;
 
             // Jika sudah expired dan belum ada bukti, auto-set ke expired
-            if (remaining <= 0 && !order.payment_proof_url && order.status === 'pending') {
+            if (remaining <= 0 && !order.payment_proof_url && order.status === 'pending_pembayaran') {
               try {
                 console.log('⏰ Auto-expiring order:', order.custom_id || order.id);
                 console.log('📝 Calling API to update status to expired...');
-                
+
                 const response = await fetch(`/api/payment/status/${order.id}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
@@ -89,7 +89,7 @@ export default function AdminPage() {
         );
 
         // Filter hanya order yang masih pending (yang expired akan otomatis terfilter)
-        setOrders(processedOrders.filter(o => o.status === 'pending'));
+        setOrders(processedOrders.filter(o => o.status === 'pending_pembayaran' || o.status === 'pending_konfirmasi_admin'));
       }
       setLoading(false);
     };
@@ -198,6 +198,13 @@ export default function AdminPage() {
                         <div className="flex flex-wrap items-center gap-2 mb-3">
                           <span className="font-mono text-xs text-purple-400 bg-gray-900 px-2 sm:px-3 py-1.5 rounded-lg border border-purple-500/30 font-bold truncate">{order.custom_id || order.id}</span>
                           <span className="text-xs text-gray-500">{new Date(order.created_at).toLocaleString('id-ID')}</span>
+                          {/* Badge status */}
+                          {order.status === 'pending_konfirmasi_admin' && (
+                            <span className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-1 rounded-full border border-yellow-500/30">⏳ Menunggu Konfirmasi</span>
+                          )}
+                          {order.status === 'pending_pembayaran' && (
+                            <span className="bg-orange-500/20 text-orange-400 text-xs font-bold px-2 py-1 rounded-full border border-orange-500/30">💳 Belum Bayar</span>
+                          )}
                         </div>
                         {product && (
                           <div className="flex items-center gap-2 sm:gap-3 mb-3 p-2 sm:p-3 bg-gray-900 rounded-lg border border-purple-500/20">

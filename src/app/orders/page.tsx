@@ -101,7 +101,8 @@ export default function OrdersPage() {
   // Stats
   const stats = useMemo(() => ({
     total: orders.length,
-    pending: orders.filter(o => o.status === 'pending').length,
+    pending_pembayaran: orders.filter(o => o.status === 'pending_pembayaran').length,
+    pending_konfirmasi_admin: orders.filter(o => o.status === 'pending_konfirmasi_admin').length,
     berhasil: orders.filter(o => o.status === 'berhasil').length,
     gagal: orders.filter(o => o.status === 'gagal').length,
     expired: orders.filter(o => o.status === 'expired').length,
@@ -143,14 +144,18 @@ export default function OrdersPage() {
 
         {/* Stats Cards */}
         <div className="bg-gray-900 border-2 border-blue-500/50 p-3 sm:p-4 mb-4 sm:mb-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3">
             <div className="bg-gray-800 rounded-lg p-2 sm:p-3 border border-blue-500/30 text-center">
               <div className="text-xl sm:text-2xl font-black text-blue-400">{stats.total}</div>
               <div className="text-xs text-gray-400">Total Orders</div>
             </div>
             <div className="bg-gray-800 rounded-lg p-2 sm:p-3 border border-yellow-500/30 text-center">
-              <div className="text-xl sm:text-2xl font-black text-yellow-400">{stats.pending}</div>
+              <div className="text-xl sm:text-2xl font-black text-yellow-400">{stats.pending_pembayaran}</div>
               <div className="text-xs text-gray-400">Menunggu Bayar</div>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-2 sm:p-3 border border-orange-500/30 text-center">
+              <div className="text-xl sm:text-2xl font-black text-orange-400">{stats.pending_konfirmasi_admin}</div>
+              <div className="text-xs text-gray-400">Menunggu Verifikasi</div>
             </div>
             <div className="bg-gray-800 rounded-lg p-2 sm:p-3 border border-green-500/30 text-center">
               <div className="text-xl sm:text-2xl font-black text-green-400">{stats.berhasil}</div>
@@ -160,7 +165,7 @@ export default function OrdersPage() {
               <div className="text-xl sm:text-2xl font-black text-red-400">{stats.gagal}</div>
               <div className="text-xs text-gray-400">Ditolak Admin</div>
             </div>
-            <div className="bg-gray-800 rounded-lg p-2 sm:p-3 border border-orange-500/30 text-center">
+            <div className="bg-gray-800 rounded-lg p-2 sm:p-3 border border-orange-500/30 text-center col-span-2 md:col-span-1">
               <div className="text-xl sm:text-2xl font-black text-orange-400">{stats.expired}</div>
               <div className="text-xs text-gray-400">Expired/Gagal</div>
             </div>
@@ -288,7 +293,8 @@ export default function OrdersPage() {
                 {paginatedOrders.map((order) => {
                   const product = order.product_id ? productMap[order.product_id] : null;
                   const statusStyles = {
-                    pending: 'bg-yellow-900/50 border-yellow-500/50 text-yellow-400',
+                    pending_pembayaran: 'bg-yellow-900/50 border-yellow-500/50 text-yellow-400',
+                    pending_konfirmasi_admin: 'bg-orange-900/50 border-orange-500/50 text-orange-400',
                     berhasil: 'bg-green-900/50 border-green-500/50 text-green-400',
                     gagal: 'bg-red-900/50 border-red-500/50 text-red-400',
                     expired: 'bg-orange-900/50 border-orange-500/50 text-orange-400',
@@ -338,14 +344,16 @@ export default function OrdersPage() {
                               statusStyles[order.status as keyof typeof statusStyles] || 'bg-gray-800 border-gray-600 text-gray-400'
                             }`}
                             title={
-                              order.status === 'pending' ? 'Menunggu pembayaran' :
+                              order.status === 'pending_pembayaran' ? 'Menunggu pembayaran' :
+                              order.status === 'pending_konfirmasi_admin' ? 'Menunggu verifikasi admin' :
                               order.status === 'berhasil' ? 'Bug berhasil terkirim ke nomor tujuan' :
                               order.status === 'gagal' ? 'Pembayaran ditolak oleh admin' :
                               order.status === 'expired' ? 'Pembayaran expired/gagal - waktu habis atau masalah lain' :
                               ''
                             }
                           >
-                            {order.status === 'pending' && '⏳ Menunggu Pembayaran'}
+                            {order.status === 'pending_pembayaran' && '⏳ Menunggu Pembayaran'}
+                            {order.status === 'pending_konfirmasi_admin' && '📋 Menunggu Verifikasi Admin'}
                             {order.status === 'berhasil' && '✅ Bug Terkirim'}
                             {order.status === 'gagal' && '❌ Ditolak Admin'}
                             {order.status === 'expired' && '⏰ Expired/Gagal'}

@@ -69,12 +69,12 @@ export async function POST(request: NextRequest) {
 
     const proofUrl = urlData.publicUrl;
 
-    // Update order dengan payment proof - auto set status ke pending
+    // Update order dengan payment proof - set status ke pending_konfirmasi_admin
     const { error: updateError } = await supabaseAdmin
       .from('orders')
       .update({
         payment_proof_url: proofUrl,
-        status: 'pending', // Auto reset ke pending untuk verifikasi admin
+        status: 'pending_konfirmasi_admin', // Set status ke pending_konfirmasi_admin
       })
       .or(`id.eq.${orderId},custom_id.eq.${orderId}`);
 
