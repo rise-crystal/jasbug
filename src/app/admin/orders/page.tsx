@@ -47,7 +47,47 @@ export default function AdminOrdersPage() {
         .order('created_at', { ascending: false });
 
       if (data) {
-        setOrders(data);
+        // Auto-expire order yang sudah lewat 5 menit tanpa bukti pembayaran
+        const now = Date.now();
+        const fiveMinutes = 5 * 60 * 1000;
+
+        const processedOrders = await Promise.all(
+          data.map(async (order) => {
+            const createdAt = new Date(order.created_at).getTime();
+            const elapsed = now - createdAt;
+            const remaining = fiveMinutes - elapsed;
+
+            // Jika sudah expired dan belum ada bukti, auto-set ke expired
+            if (remaining <= 0 && !order.payment_proof_url && order.status === 'pending') {
+              try {
+                console.log('⏰ Auto-expiring order:', order.custom_id || order.id);
+                
+                const response = await fetch(`/api/payment/status/${order.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: 'expired' }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                  console.log('✅ SUCCESS: Order expired in database');
+                  return { ...order, status: 'expired' };
+                } else {
+                  console.error('❌ FAILED: Could not auto-expire order:', result.error);
+                  return order;
+                }
+              } catch (error) {
+                console.error('❌ FAILED: Auto-expire error:', error);
+                return order;
+              }
+            }
+
+            return order;
+          })
+        );
+
+        setOrders(processedOrders);
       }
       setLoading(false);
     };
