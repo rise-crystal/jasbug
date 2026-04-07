@@ -27,7 +27,7 @@ CREATE TABLE orders (
   product_id VARCHAR(50),
   
   -- Status (dengan constraint yang benar)
-  status VARCHAR(20) NOT NULL DEFAULT 'pending_pembayaran',
+  status VARCHAR(30) NOT NULL DEFAULT 'pending_pembayaran',
   
   -- Payment
   dana_transaction_id VARCHAR(100),

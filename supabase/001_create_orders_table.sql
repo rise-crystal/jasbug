@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS orders (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   phone_number VARCHAR(20) NOT NULL,
   product_id VARCHAR(50),
-  status VARCHAR(20) DEFAULT 'pending' NOT NULL,
+  status VARCHAR(30) DEFAULT 'pending' NOT NULL,
   dana_transaction_id VARCHAR(100),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );

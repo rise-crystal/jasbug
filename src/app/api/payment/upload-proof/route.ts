@@ -41,15 +41,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Pastikan order memang ada sebelum file di-upload ke storage
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from('orders')
+      .select('id, custom_id, status')
+      .or(`id.eq.${orderId},custom_id.eq.${orderId}`)
+      .maybeSingle();
+
+    if (orderError) {
+      console.error('Fetch order error:', orderError);
+      return NextResponse.json(
+        { error: 'Gagal mengambil data order' },
+        { status: 500 }
+      );
+    }
+
+    if (!order) {
+      return NextResponse.json(
+        { error: 'Order tidak ditemukan' },
+        { status: 404 }
+      );
+    }
+
     // Generate unique filename
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(7);
     const ext = file.name.split('.').pop() || 'jpg';
     const fileName = `${orderId}-${timestamp}-${randomStr}.${ext}`;
+    const proofPath = `proofs/${fileName}`;
 
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from('payment-proofs')
-      .upload(`proofs/${fileName}`, file, {
+      .upload(proofPath, file, {
         cacheControl: '3600',
         upsert: false,
       });
@@ -65,51 +88,43 @@ export async function POST(request: NextRequest) {
     // Get public URL
     const { data: urlData } = supabaseAdmin.storage
       .from('payment-proofs')
-      .getPublicUrl(`proofs/${fileName}`);
+      .getPublicUrl(proofPath);
 
     const proofUrl = urlData.publicUrl;
 
     // Update order dengan payment proof - set status ke pending_konfirmasi_admin
-    // Coba dengan .eq() terlebih dahulu, fallback ke .or() jika perlu
-    let { error: updateError } = await supabaseAdmin
+    const { data: updatedOrders, error: updateError } = await supabaseAdmin
       .from('orders')
       .update({
         payment_proof_url: proofUrl,
         status: 'pending_konfirmasi_admin', // Set status ke pending_konfirmasi_admin
+        payment_proof_verified: false,
+        payment_proof_verified_at: null,
       })
-      .eq('id', orderId);
+      .eq('id', order.id)
+      .select('id');
 
-    // Jika tidak ada row yang ter-update, coba dengan custom_id
-    if (updateError) {
-      console.log('Update with ID failed, trying custom_id...');
-      const { error: updateError2 } = await supabaseAdmin
-        .from('orders')
-        .update({
-          payment_proof_url: proofUrl,
-          status: 'pending_konfirmasi_admin',
-        })
-        .eq('custom_id', orderId);
-
-      updateError = updateError2;
-    }
-
-    if (updateError) {
+    if (updateError || !updatedOrders || updatedOrders.length === 0) {
+      await supabaseAdmin.storage.from('payment-proofs').remove([proofPath]);
       console.error('Update order error:', updateError);
       console.error('Order ID:', orderId);
+      console.error('Resolved Order:', order);
       console.error('Proof URL:', proofUrl);
-      console.error('Error details:', JSON.stringify(updateError, null, 2));
+      if (updateError) {
+        console.error('Error details:', JSON.stringify(updateError, null, 2));
+      }
       return NextResponse.json(
         { 
-          error: 'Gagal update order', 
-          details: updateError.message,
-          code: updateError.code,
-          hint: updateError.hint,
+          error: 'Gagal update order',
+          details: updateError?.message || 'Order tidak ditemukan saat proses update',
+          code: updateError?.code,
+          hint: updateError?.hint,
         },
         { status: 500 }
       );
     }
 
-    console.log('✅ Order updated successfully:', orderId);
+    console.log('✅ Order updated successfully:', order.id);
 
     return NextResponse.json({
       success: true,
