@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
+// Force dynamic rendering untuk API endpoint
+export const dynamic = 'force-dynamic';
+
 // GET - Check payment status
 export async function GET(
   request: NextRequest,
@@ -129,8 +132,4 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
-
-export async function generateStaticParams() {
-  return [];
 }
