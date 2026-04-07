@@ -18,7 +18,6 @@ interface Order {
   payment_proof_verified_at: string | null;
   bug_delivery_status: string | null;
   bug_sent_at: string | null;
-  expired: boolean | null;
   created_at: string;
 }
 

@@ -14,7 +14,6 @@ interface Order {
   payment_proof_url: string | null;
   payment_proof_verified: boolean | null;
   payment_proof_verified_at: string | null;
-  expired: boolean | null;
   created_at: string;
 }
 
@@ -67,7 +66,7 @@ export default function AdminPage() {
                 
                 if (response.ok) {
                   console.log('✅ Auto-expire order:', order.custom_id || order.id);
-                  return { ...order, status: 'gagal', expired: true };
+                  return { ...order, status: 'gagal' };
                 }
               } catch (error) {
                 console.error('Auto-expire error:', error);

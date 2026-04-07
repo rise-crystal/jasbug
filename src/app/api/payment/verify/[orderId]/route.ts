@@ -86,7 +86,6 @@ export async function PUT(
       // Jika ditolak DAN tidak ada bukti (expired/timeout), set ke gagal tanpa perlu validasi bukti
       updateData.status = 'gagal';
       updateData.bug_delivery_status = 'failed';
-      updateData.expired = true; // Tandai sebagai expired
     } else {
       // Jika ditolak tapi ada bukti (admin reject)
       updateData.status = 'gagal';
