@@ -573,13 +573,7 @@ function PaymentContent() {
                   <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-red-500/50 text-center">
                     <div className="text-3xl sm:text-4xl mb-3">⏰</div>
                     <p className="text-gray-400 font-bold mb-2 text-sm sm:text-base">Waktu pembayaran sudah habis</p>
-                    <p className="text-gray-500 text-xs sm:text-sm mb-4">Silakan buat order baru</p>
-                    <a
-                      href="/"
-                      className="inline-block bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold py-2 px-6 rounded-lg transition text-sm sm:text-base"
-                    >
-                      🚀 Buat Order Baru
-                    </a>
+                    <p className="text-gray-500 text-xs sm:text-sm">Detail status dan aksi lanjutan ada di bawah</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
