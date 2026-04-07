@@ -183,8 +183,9 @@ export default function AdminPage() {
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-12 sm:py-16">
-              <div className="text-5xl sm:text-7xl mb-4">✅</div>
-              <p className="text-gray-400 text-lg sm:text-xl font-bold mb-2">Semua sudah diverifikasi!</p>
+              <div className="text-5xl sm:text-7xl mb-4">📭</div>
+              <p className="text-gray-400 text-lg sm:text-xl font-bold mb-2">Data belum tersedia</p>
+              <p className="text-gray-500 text-sm sm:text-base">Tidak ada order pending untuk diverifikasi</p>
             </div>
           ) : (
             <div className="space-y-4">
