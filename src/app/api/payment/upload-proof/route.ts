@@ -70,27 +70,46 @@ export async function POST(request: NextRequest) {
     const proofUrl = urlData.publicUrl;
 
     // Update order dengan payment proof - set status ke pending_konfirmasi_admin
-    const { error: updateError } = await supabaseAdmin
+    // Coba dengan .eq() terlebih dahulu, fallback ke .or() jika perlu
+    let { error: updateError } = await supabaseAdmin
       .from('orders')
       .update({
         payment_proof_url: proofUrl,
         status: 'pending_konfirmasi_admin', // Set status ke pending_konfirmasi_admin
       })
-      .or(`id.eq.${orderId},custom_id.eq.${orderId}`);
+      .eq('id', orderId);
+
+    // Jika tidak ada row yang ter-update, coba dengan custom_id
+    if (updateError) {
+      console.log('Update with ID failed, trying custom_id...');
+      const { error: updateError2 } = await supabaseAdmin
+        .from('orders')
+        .update({
+          payment_proof_url: proofUrl,
+          status: 'pending_konfirmasi_admin',
+        })
+        .eq('custom_id', orderId);
+
+      updateError = updateError2;
+    }
 
     if (updateError) {
       console.error('Update order error:', updateError);
       console.error('Order ID:', orderId);
       console.error('Proof URL:', proofUrl);
+      console.error('Error details:', JSON.stringify(updateError, null, 2));
       return NextResponse.json(
         { 
           error: 'Gagal update order', 
           details: updateError.message,
-          code: updateError.code 
+          code: updateError.code,
+          hint: updateError.hint,
         },
         { status: 500 }
       );
     }
+
+    console.log('✅ Order updated successfully:', orderId);
 
     return NextResponse.json({
       success: true,
