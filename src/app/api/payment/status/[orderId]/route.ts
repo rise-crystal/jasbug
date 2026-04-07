@@ -95,35 +95,24 @@ export async function PUT(
 
     const supabaseAdmin = getSupabaseAdmin();
     if (!supabaseAdmin) {
-      console.error('❌ CRITICAL: Supabase admin client is NULL!');
-      console.error('Check: SUPABASE_SERVICE_ROLE_KEY environment variable');
       return NextResponse.json(
-        { error: 'Database tidak terkonfigurasi - Missing service role key' },
+        { error: 'Database tidak terkonfigurasi' },
         { status: 500 }
       );
     }
 
-    console.log(`📝 Updating order ${orderId} to status: ${status}`);
-
-    // Try update by ID first (simple .eq() - most reliable)
-    const { data: updateData, error: updateError } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('orders')
-      .update({ status, updated_at: new Date().toISOString() })
+      .update({ status })
       .eq('id', orderId);
 
-    if (updateError) {
-      console.error('❌ Update failed!');
-      console.error('Error code:', updateError.code);
-      console.error('Error message:', updateError.message);
-      console.error('Error details:', JSON.stringify(updateError, null, 2));
-      
+    if (error) {
+      console.error(error);
       return NextResponse.json(
-        { error: 'Gagal update status order', details: updateError },
+        { error: 'Gagal update status order', details: error.message },
         { status: 500 }
       );
     }
-
-    console.log('✅ Update successful');
 
     return NextResponse.json({
       success: true,
