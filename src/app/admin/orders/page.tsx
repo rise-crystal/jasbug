@@ -31,7 +31,7 @@ export default function AdminOrdersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const [rowsPerPage, setRowsPerPage] = useState(15);
 
   useEffect(() => {
     if (!supabase) {
@@ -130,16 +130,16 @@ export default function AdminOrdersPage() {
   });
 
   // Pagination
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredOrders.length / rowsPerPage);
   const paginatedOrders = filteredOrders.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
   );
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, filterStatus]);
+  }, [searchQuery, filterStatus, rowsPerPage]);
 
   const statusColors: Record<string, string> = {
     pending: 'bg-yellow-900/50 border-yellow-500/50 text-yellow-400',
@@ -194,7 +194,7 @@ export default function AdminOrdersPage() {
           </div>
 
           {/* Search & Filter */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <input
               type="text"
               value={searchQuery}
@@ -215,6 +215,24 @@ export default function AdminOrdersPage() {
             </select>
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <span>Menampilkan: {paginatedOrders.length} dari {filteredOrders.length} orders (Total: {orders.length})</span>
+            </div>
+            {/* Rows Per Page */}
+            <div>
+              <label className="block text-xs text-gray-400 mb-2">📊 Baris per Halaman</label>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+              >
+                <option value={10}>10 baris</option>
+                <option value={15}>15 baris</option>
+                <option value={25}>25 baris</option>
+                <option value={50}>50 baris</option>
+                <option value={100}>100 baris</option>
+              </select>
             </div>
           </div>
 

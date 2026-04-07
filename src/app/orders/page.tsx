@@ -28,7 +28,7 @@ export default function OrdersPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     if (!supabase) {
@@ -95,16 +95,16 @@ export default function OrdersPage() {
   }, [orders, filterStatus, searchQuery]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredOrders.length / rowsPerPage);
   const paginatedOrders = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredOrders.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredOrders, currentPage]);
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    return filteredOrders.slice(startIndex, startIndex + rowsPerPage);
+  }, [filteredOrders, currentPage, rowsPerPage]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterStatus, searchQuery]);
+  }, [filterStatus, searchQuery, rowsPerPage]);
 
   // Stats
   const stats = useMemo(() => ({
@@ -200,7 +200,7 @@ export default function OrdersPage() {
 
         {/* Filters & Search */}
         <div className="bg-gray-900 border-2 border-blue-500/50 p-3 sm:p-4 mb-4 sm:mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {/* Search */}
             <div>
               <label className="block text-xs text-gray-400 mb-2">🔍 Search</label>
@@ -230,7 +230,7 @@ export default function OrdersPage() {
             </div>
 
             {/* Sort */}
-            <div className="sm:col-span-1 md:col-span-1">
+            <div>
               <label className="block text-xs text-gray-400 mb-2">📅 Urutkan</label>
               <select
                 value={sortBy}
@@ -239,6 +239,25 @@ export default function OrdersPage() {
               >
                 <option value="newest">Terbaru Dulu</option>
                 <option value="oldest">Terlama Dulu</option>
+              </select>
+            </div>
+
+            {/* Rows Per Page */}
+            <div>
+              <label className="block text-xs text-gray-400 mb-2">📊 Baris per Halaman</label>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+              >
+                <option value={5}>5 baris</option>
+                <option value={10}>10 baris</option>
+                <option value={25}>25 baris</option>
+                <option value={50}>50 baris</option>
+                <option value={100}>100 baris</option>
               </select>
             </div>
           </div>
