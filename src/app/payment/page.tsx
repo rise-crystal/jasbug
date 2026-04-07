@@ -18,6 +18,7 @@ interface Order {
   payment_proof_verified_at: string | null;
   bug_delivery_status: string | null;
   bug_sent_at: string | null;
+  expired: boolean | null;
   created_at: string;
 }
 
@@ -47,7 +48,7 @@ function PaymentContent() {
   useEffect(() => {
     if (!selectedOrder || !selectedOrder.created_at) return;
 
-    const checkExpiry = () => {
+    const checkExpiry = async () => {
       const createdAt = new Date(selectedOrder.created_at).getTime();
       const now = Date.now();
       const elapsed = now - createdAt;
@@ -59,8 +60,25 @@ function PaymentContent() {
         if (!selectedOrder.payment_proof_url && selectedOrder.status === 'pending') {
           setIsExpired(true);
           setTimeLeft(0);
-          // Auto-update status to gagal hanya jika belum upload bukti
-          updateOrderStatus(selectedOrder.id, 'gagal');
+          
+          // Auto-update status ke gagal
+          try {
+            const response = await fetch(`/api/payment/verify/${selectedOrder.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ verified: false }),
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              console.log('✅ Auto-expire order:', data.message);
+              
+              // Update selectedOrder state
+              setSelectedOrder(prev => prev ? { ...prev, status: 'gagal' as string } : null);
+            }
+          } catch (error) {
+            console.error('Auto-expire error:', error);
+          }
         } else if (selectedOrder.payment_proof_url) {
           // Sudah upload bukti, stop timer tapi jangan auto-gagal
           setIsExpired(false);

@@ -60,7 +60,10 @@ export async function PUT(
     }
 
     // Cek apakah sudah ada bukti pembayaran
-    if (!order.payment_proof_url) {
+    const hasPaymentProof = order.payment_proof_url;
+
+    // Jika diverifikasi tapi belum ada bukti, tolak
+    if (verified && !hasPaymentProof) {
       return NextResponse.json(
         { error: 'Order belum memiliki bukti pembayaran' },
         { status: 400 }
@@ -75,11 +78,17 @@ export async function PUT(
     };
 
     if (verified) {
+      // Jika disetujui, harus ada bukti pembayaran
       updateData.status = 'berhasil';
       updateData.bug_delivery_status = 'sent';
       updateData.bug_sent_at = new Date().toISOString();
+    } else if (!hasPaymentProof && !verified) {
+      // Jika ditolak DAN tidak ada bukti (expired/timeout), set ke gagal tanpa perlu validasi bukti
+      updateData.status = 'gagal';
+      updateData.bug_delivery_status = 'failed';
+      updateData.expired = true; // Tandai sebagai expired
     } else {
-      // Jika ditolak, status gagal
+      // Jika ditolak tapi ada bukti (admin reject)
       updateData.status = 'gagal';
       updateData.bug_delivery_status = 'failed';
     }
@@ -101,9 +110,12 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      message: verified ? 'Pembayaran berhasil diverifikasi' : 'Pembayaran ditolak',
+      message: verified 
+        ? 'Pembayaran berhasil diverifikasi' 
+        : (hasPaymentProof ? 'Pembayaran ditolak' : 'Order expired - otomatis gagal'),
       orderId,
       newStatus: verified ? 'berhasil' : 'gagal',
+      hasPaymentProof,
     });
   } catch (error) {
     console.error('Verify payment error:', error);

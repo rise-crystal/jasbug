@@ -14,6 +14,7 @@ interface Order {
   payment_proof_url: string | null;
   payment_proof_verified: boolean | null;
   payment_proof_verified_at: string | null;
+  expired: boolean | null;
   created_at: string;
 }
 
@@ -44,7 +45,42 @@ export default function AdminPage() {
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      if (data) setOrders(data);
+      if (data) {
+        // Auto-expire order yang sudah lewat 5 menit tanpa bukti pembayaran
+        const now = Date.now();
+        const fiveMinutes = 5 * 60 * 1000;
+        
+        const processedOrders = await Promise.all(
+          data.map(async (order) => {
+            const createdAt = new Date(order.created_at).getTime();
+            const elapsed = now - createdAt;
+            const remaining = fiveMinutes - elapsed;
+            
+            // Jika sudah expired dan belum ada bukti, auto-set ke gagal
+            if (remaining <= 0 && !order.payment_proof_url && order.status === 'pending') {
+              try {
+                const response = await fetch(`/api/payment/verify/${order.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ verified: false }),
+                });
+                
+                if (response.ok) {
+                  console.log('✅ Auto-expire order:', order.custom_id || order.id);
+                  return { ...order, status: 'gagal', expired: true };
+                }
+              } catch (error) {
+                console.error('Auto-expire error:', error);
+              }
+            }
+            
+            return order;
+          })
+        );
+        
+        // Filter hanya order yang masih pending (yang expired akan otomatis terfilter)
+        setOrders(processedOrders.filter(o => o.status === 'pending'));
+      }
       setLoading(false);
     };
 
@@ -72,8 +108,17 @@ export default function AdminPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Gagal verifikasi');
+      
       setOrders(prev => prev.filter(o => o.id !== orderId));
-      alert(verified ? '✅ Pembayaran berhasil diverifikasi!' : '❌ Pembayaran ditolak');
+      
+      // Tampilkan pesan yang sesuai berdasarkan hasil verifikasi
+      if (verified) {
+        alert('✅ Pembayaran berhasil diverifikasi!');
+      } else if (data.hasPaymentProof) {
+        alert('❌ Pembayaran ditolak oleh admin');
+      } else {
+        alert('⏰ Order ditandai sebagai expired (otomatis gagal)');
+      }
     } catch (error) {
       console.error('Verify error:', error);
       alert('❌ Gagal verifikasi: ' + (error as Error).message);
@@ -153,16 +198,27 @@ export default function AdminPage() {
                             <button onClick={() => setSelectedProof(order.payment_proof_url)} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs sm:text-sm font-bold py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition">👁️ Lihat Bukti</button>
                           </div>
                         ) : (
-                          <div className="bg-gray-900 rounded-lg p-3 sm:p-4 border border-yellow-500/30">
-                            <p className="text-xs text-yellow-400 mb-2 font-bold">⏳ Belum Upload Bukti</p>
-                            <p className="text-xs text-gray-500">Menunggu pembayaran dari customer</p>
+                          <div className="bg-red-900/30 rounded-lg p-3 sm:p-4 border-2 border-red-500/50">
+                            <p className="text-xs text-red-400 mb-2 font-bold">⚠️ BELUM Upload Bukti</p>
+                            <p className="text-xs text-gray-400 mb-2">Customer belum upload bukti pembayaran</p>
+                            <p className="text-xs text-yellow-400 font-bold">💡 Klik "Tandai Expired" jika sudah lewat 5 menit</p>
                           </div>
                         )}
                         <div className="space-y-2">
-                          <button onClick={() => handleVerify(order.id, true)} disabled={verifyingId === order.id || !order.payment_proof_url} className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition disabled:cursor-not-allowed text-xs sm:text-sm">
+                          <button 
+                            onClick={() => handleVerify(order.id, true)} 
+                            disabled={verifyingId === order.id || !order.payment_proof_url} 
+                            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition disabled:cursor-not-allowed text-xs sm:text-sm"
+                          >
                             {verifyingId === order.id ? <span className="flex items-center justify-center gap-2"><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Processing...</span> : '✅ Setujui'}
                           </button>
-                          <button onClick={() => handleVerify(order.id, false)} disabled={verifyingId === order.id} className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition disabled:cursor-not-allowed text-xs sm:text-sm">❌ Tolak</button>
+                          <button 
+                            onClick={() => handleVerify(order.id, false)} 
+                            disabled={verifyingId === order.id} 
+                            className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition disabled:cursor-not-allowed text-xs sm:text-sm"
+                          >
+                            {order.payment_proof_url ? '❌ Tolak' : '⏰ Tandai Expired'}
+                          </button>
                         </div>
                       </div>
                     </div>
