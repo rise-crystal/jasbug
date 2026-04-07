@@ -307,7 +307,7 @@ function PaymentContent() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 relative overflow-hidden py-8 px-4">
+    <main className="min-h-screen bg-gray-950 relative overflow-hidden py-4 sm:py-8 px-3 sm:px-4">
       {/* Animated Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,0,0,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,0,0,0.05)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
@@ -317,38 +317,38 @@ function PaymentContent() {
 
       <div className="relative z-10 max-w-2xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-center py-6 px-6 rounded-t-2xl mb-6 shadow-2xl shadow-green-500/30">
-          <h1 className="text-4xl font-black text-white mb-2">
+        <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-center py-4 sm:py-6 px-4 sm:px-6 rounded-t-2xl mb-4 sm:mb-6 shadow-2xl shadow-green-500/30">
+          <h1 className="text-3xl sm:text-4xl font-black text-white mb-2">
             💳 PEMBAYARAN
           </h1>
-          <p className="text-green-100 text-sm">Scan QR atau upload bukti transfer</p>
+          <p className="text-green-100 text-xs sm:text-sm">Scan QR atau upload bukti transfer</p>
         </div>
 
         {/* Payment Card */}
-        <div className="bg-gray-900 border-2 border-green-500/50 rounded-b-2xl p-6 shadow-2xl shadow-green-500/20">
+        <div className="bg-gray-900 border-2 border-green-500/50 rounded-b-2xl p-4 sm:p-6 shadow-2xl shadow-green-500/20">
           {loading ? (
-            <div className="text-center py-16">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-500 border-t-transparent mx-auto"></div>
-              <p className="mt-6 text-gray-400 text-lg">Memuat pembayaran...</p>
+            <div className="text-center py-12 sm:py-16">
+              <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-4 border-green-500 border-t-transparent mx-auto"></div>
+              <p className="mt-4 sm:mt-6 text-gray-400 text-base sm:text-lg">Memuat pembayaran...</p>
             </div>
           ) : !selectedOrder ? (
-            <div className="text-center py-16">
-              <div className="text-7xl mb-4">💳</div>
-              <p className="text-gray-400 text-xl font-bold mb-2">Order tidak ditemukan</p>
-              <p className="text-gray-500 text-sm mb-6">Buat order baru terlebih dahulu</p>
+            <div className="text-center py-12 sm:py-16">
+              <div className="text-5xl sm:text-7xl mb-4">💳</div>
+              <p className="text-gray-400 text-lg sm:text-xl font-bold mb-2">Order tidak ditemukan</p>
+              <p className="text-gray-500 text-xs sm:text-sm mb-6">Buat order baru terlebih dahulu</p>
               <a
                 href="/"
-                className="inline-block bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold py-3 px-8 rounded-lg transition shadow-lg shadow-red-500/30"
+                className="inline-block bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition shadow-lg shadow-red-500/30 text-sm sm:text-base"
               >
                 🚀 Buat Order
               </a>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Order Info */}
-              <div className="bg-gray-800 rounded-xl p-4 border border-green-500/30">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-mono text-sm text-orange-400 bg-gray-900 px-3 py-1.5 rounded-lg border border-orange-500/30 font-bold">
+              <div className="bg-gray-800 rounded-xl p-3 sm:p-4 border border-green-500/30">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <span className="font-mono text-xs sm:text-sm text-orange-400 bg-gray-900 px-2 sm:px-3 py-1.5 rounded-lg border border-orange-500/30 font-bold truncate">
                     {selectedOrder.custom_id || selectedOrder.id}
                   </span>
                   <span className="text-xs text-gray-500">
@@ -359,10 +359,10 @@ function PaymentContent() {
                 {/* Countdown Timer - Hide if already uploaded proof */}
                 {selectedOrder.status === 'pending' && !isExpired && !selectedOrder.payment_proof_url && (
                   <div className={`rounded-lg p-3 mb-3 text-center ${
-                    timeLeft < 60 
-                      ? 'bg-red-900/50 border-2 border-red-500 animate-pulse' 
-                      : timeLeft < 180 
-                      ? 'bg-yellow-900/50 border-2 border-yellow-500' 
+                    timeLeft < 60
+                      ? 'bg-red-900/50 border-2 border-red-500 animate-pulse'
+                      : timeLeft < 180
+                      ? 'bg-yellow-900/50 border-2 border-yellow-500'
                       : 'bg-blue-900/30 border border-blue-500/30'
                   }`}>
                     <p className={`text-xs mb-1 ${
@@ -370,7 +370,7 @@ function PaymentContent() {
                     }`}>
                       ⏰ Batas waktu pembayaran:
                     </p>
-                    <p className={`text-3xl font-black ${
+                    <p className={`text-2xl sm:text-3xl font-black ${
                       timeLeft < 60 ? 'text-red-400' : timeLeft < 180 ? 'text-yellow-400' : 'text-blue-400'
                     }`}>
                       {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
@@ -385,31 +385,31 @@ function PaymentContent() {
 
                 {isExpired && (
                   <div className="bg-red-900/50 border-2 border-red-500 rounded-lg p-3 mb-3 text-center">
-                    <p className="text-red-400 text-sm font-bold">
+                    <p className="text-red-400 text-xs sm:text-sm font-bold">
                       ❌ Waktu pembayaran sudah habis
                     </p>
                   </div>
                 )}
 
-                <div className="flex items-center gap-3 mb-3 p-3 bg-gray-900 rounded-lg">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 p-2 sm:p-3 bg-gray-900 rounded-lg">
                   <img
                     src="https://media.tenor.com/1B8g80k8vC4AAAAi/gf.gif"
                     alt="Power Bug"
-                    className="w-12 h-12 object-contain"
+                    className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
                   />
                   <div>
-                    <p className="text-sm font-bold text-gray-300">Power Bug 🔥</p>
+                    <p className="text-xs sm:text-sm font-bold text-gray-300">Power Bug 🔥</p>
                     <p className="text-xs text-gray-500">Digital Payload</p>
                   </div>
                 </div>
 
-                <p className="text-gray-400 text-sm mb-2">
+                <p className="text-gray-400 text-xs sm:text-sm mb-2">
                   📱 <span className="font-mono text-orange-400">{selectedOrder.phone_number}</span>
                 </p>
 
                 <div className="bg-gradient-to-r from-orange-600 to-red-600 rounded-lg p-3 text-center">
                   <p className="text-white/80 text-xs mb-1">Total Pembayaran</p>
-                  <p className="text-white font-black text-2xl">
+                  <p className="text-white font-black text-xl sm:text-2xl">
                     Rp {selectedOrder.payment_amount?.toLocaleString('id-ID') || '10.000'}
                   </p>
                 </div>
@@ -417,20 +417,20 @@ function PaymentContent() {
 
               {/* QR Code Section */}
               {!isExpired && !selectedOrder.payment_proof_url && (
-                <div className="bg-gray-800 rounded-xl p-6 border border-green-500/30">
-                  <h3 className="text-center text-lg font-black text-white mb-4">
+                <div className="bg-gray-800 rounded-xl p-4 sm:p-6 border border-green-500/30">
+                  <h3 className="text-center text-base sm:text-lg font-black text-white mb-4">
                     📱 Scan QR Code
                   </h3>
 
                   {qrCodeDataUrl ? (
-                    <div className="bg-white rounded-xl p-4 mb-4 shadow-lg">
+                    <div className="bg-white rounded-xl p-3 sm:p-4 mb-4 shadow-lg">
                       <img src={qrCodeDataUrl} alt="QR Code" className="w-full" />
                     </div>
                   ) : (
-                    <div className="bg-gray-900 rounded-xl p-8 mb-4 flex items-center justify-center">
+                    <div className="bg-gray-900 rounded-xl p-6 sm:p-8 mb-4 flex items-center justify-center">
                       <div className="text-center">
-                        <div className="text-6xl mb-3">⏳</div>
-                        <p className="text-gray-500 text-sm">Generating QR Code...</p>
+                        <div className="text-4xl sm:text-6xl mb-3">⏳</div>
+                        <p className="text-gray-500 text-xs sm:text-sm">Generating QR Code...</p>
                       </div>
                     </div>
                   )}
@@ -450,98 +450,166 @@ function PaymentContent() {
               )}
 
               {/* Upload Bukti Section */}
-              <div className="bg-gray-800 rounded-xl p-6 border border-green-500/30">
-                <h3 className="text-center text-lg font-black text-white mb-4">
+              <div className="bg-gray-800 rounded-xl p-4 sm:p-6 border border-green-500/30">
+                <h3 className="text-center text-base sm:text-lg font-black text-white mb-4">
                   📸 Upload Bukti Transfer
                 </h3>
 
                 {selectedOrder.payment_proof_url ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
+                    {/* Preview Bukti */}
                     <div className="bg-gray-900 rounded-lg p-4 border border-purple-500/30">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-gray-400">Bukti Pembayaran</span>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm sm:text-base text-white font-bold">✅ Bukti Pembayaran Terupload</span>
                         <button
                           onClick={() => setPreviewFile(selectedOrder.payment_proof_url)}
-                          className="text-purple-400 hover:text-purple-300 text-xs font-bold"
+                          className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-4 rounded-lg transition"
                         >
-                          👁️ Lihat
+                          🔍 Lihat Ukuran Penuh
                         </button>
                       </div>
-                      {selectedOrder.payment_proof_verified ? (
-                        <div className="flex items-center gap-2 text-green-400 text-sm">
-                          ✅ <span>Terverifikasi</span>
-                          {selectedOrder.payment_proof_verified_at && (
-                            <span className="text-gray-500 text-xs">
-                              • {new Date(selectedOrder.payment_proof_verified_at).toLocaleString('id-ID')}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-yellow-400 text-sm">
-                          ⏳ <span>Menunggu verifikasi admin</span>
-                        </div>
-                      )}
+                      
+                      {/* Preview Image */}
+                      <div className="relative rounded-lg overflow-hidden border-2 border-purple-500/50">
+                        <img
+                          src={selectedOrder.payment_proof_url}
+                          alt="Bukti Pembayaran"
+                          className="w-full h-auto object-contain bg-gray-800"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
+                      </div>
+
+                      {/* Status Verifikasi */}
+                      <div className="mt-3 flex items-center gap-3">
+                        {selectedOrder.payment_proof_verified ? (
+                          <div className="flex-1 bg-green-900/50 border border-green-500/50 rounded-lg p-3 flex items-center gap-3">
+                            <div className="text-2xl">✅</div>
+                            <div>
+                              <p className="text-green-400 font-bold text-sm">Pembayaran Terverifikasi!</p>
+                              {selectedOrder.payment_proof_verified_at && (
+                                <p className="text-green-300 text-xs mt-1">
+                                  Diverifikasi: {new Date(selectedOrder.payment_proof_verified_at).toLocaleString('id-ID')}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex-1 bg-yellow-900/50 border border-yellow-500/50 rounded-lg p-3 flex items-center gap-3">
+                            <div className="text-2xl animate-pulse">⏳</div>
+                            <div>
+                              <p className="text-yellow-400 font-bold text-sm">Menunggu Verifikasi Admin</p>
+                              <p className="text-yellow-300 text-xs mt-1">Admin sedang memeriksa bukti Anda</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Upload Ulang */}
+                    <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4">
+                      <p className="text-blue-400 text-xs sm:text-sm mb-3">
+                        💡 <strong>Ingin upload ulang?</strong> Pilih file baru untuk mengganti bukti yang sudah ada.
+                      </p>
+                      <label className="block w-full bg-gray-800 hover:bg-gray-700 border-2 border-blue-500/50 text-blue-400 text-center font-bold py-3 px-4 rounded-lg transition cursor-pointer text-sm sm:text-base">
+                        📷 Ganti Bukti Pembayaran
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 5 * 1024 * 1024) {
+                                alert('❌ File terlalu besar! Maksimal 5MB');
+                                return;
+                              }
+                              await handleUploadProof(selectedOrder.id, file);
+                            }
+                          }}
+                        />
+                      </label>
                     </div>
                   </div>
                 ) : isExpired ? (
-                  <div className="bg-gray-900 rounded-lg p-6 border border-red-500/50 text-center">
-                    <div className="text-4xl mb-3">⏰</div>
-                    <p className="text-gray-400 font-bold mb-2">Waktu pembayaran sudah habis</p>
-                    <p className="text-gray-500 text-sm mb-4">Silakan buat order baru</p>
+                  <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-red-500/50 text-center">
+                    <div className="text-3xl sm:text-4xl mb-3">⏰</div>
+                    <p className="text-gray-400 font-bold mb-2 text-sm sm:text-base">Waktu pembayaran sudah habis</p>
+                    <p className="text-gray-500 text-xs sm:text-sm mb-4">Silakan buat order baru</p>
                     <a
                       href="/"
-                      className="inline-block bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold py-2 px-6 rounded-lg transition"
+                      className="inline-block bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold py-2 px-6 rounded-lg transition text-sm sm:text-base"
                     >
                       🚀 Buat Order Baru
                     </a>
                   </div>
                 ) : (
-                  <div>
-                    <label className="block w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-center font-bold py-4 px-6 rounded-lg transition cursor-pointer shadow-lg shadow-green-500/30 hover:shadow-green-500/50">
-                      {uploadingProof ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Uploading...
-                        </span>
-                      ) : (
-                        '📸 Pilih File Bukti Transfer'
-                      )}
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            if (file.size > 5 * 1024 * 1024) {
-                              alert('❌ File terlalu besar! Maksimal 5MB');
-                              return;
+                  <div className="space-y-4">
+                    {/* Instruksi */}
+                    <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4">
+                      <p className="text-blue-300 text-xs sm:text-sm font-bold mb-2">📋 Cara Upload Bukti:</p>
+                      <ol className="text-blue-200 text-xs space-y-1 list-decimal list-inside">
+                        <li>Klik tombol hijau di bawah ini</li>
+                        <li>Pilih file bukti transfer dari device Anda</li>
+                        <li>Tunggu proses upload selesai</li>
+                        <li>Bukti akan langsung tampil di halaman ini</li>
+                      </ol>
+                    </div>
+
+                    {/* Upload Button */}
+                    <div>
+                      <label className="block w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-center font-bold py-4 sm:py-5 px-4 sm:px-6 rounded-lg transition cursor-pointer shadow-lg shadow-green-500/30 hover:shadow-green-500/50 text-sm sm:text-base">
+                        {uploadingProof ? (
+                          <span className="flex items-center justify-center gap-3">
+                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>⏳ Mengupload bukti...</span>
+                          </span>
+                        ) : (
+                          <span className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                            <span className="text-xl">📸</span>
+                            <span>Pilih File Bukti Transfer</span>
+                          </span>
+                        )}
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 5 * 1024 * 1024) {
+                                alert('❌ File terlalu besar! Maksimal 5MB');
+                                return;
+                              }
+                              await handleUploadProof(selectedOrder.id, file);
                             }
-                            await handleUploadProof(selectedOrder.id, file);
-                          }
-                        }}
-                      />
-                    </label>
-                    <p className="text-center text-xs text-gray-500 mt-3">
-                      Format: JPG, PNG, WebP, PDF (Max 5MB)
-                    </p>
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Format Info */}
+                    <div className="bg-gray-900 rounded-lg p-3 border border-gray-700">
+                      <p className="text-center text-xs text-gray-400">
+                        📄 Format yang didukung: <span className="text-white font-bold">JPG, PNG, WebP, PDF</span> (Max 5MB)
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Status */}
               {selectedOrder.status !== 'gagal' && (
-                <div className={`rounded-xl p-4 text-center ${
-                  selectedOrder.status === 'berhasil' 
-                    ? 'bg-green-900/50 border-2 border-green-500' 
+                <div className={`rounded-xl p-3 sm:p-4 text-center ${
+                  selectedOrder.status === 'berhasil'
+                    ? 'bg-green-900/50 border-2 border-green-500'
                     : selectedOrder.payment_proof_url
                     ? 'bg-purple-900/50 border-2 border-purple-500'
                     : 'bg-yellow-900/50 border-2 border-yellow-500'
                 }`}>
-                  <p className={`text-lg font-black ${
+                  <p className={`text-sm sm:text-lg font-black ${
                     selectedOrder.status === 'berhasil' ? 'text-green-400' :
                     selectedOrder.payment_proof_url ? 'text-purple-400' : 'text-yellow-400'
                   }`}>
@@ -556,7 +624,7 @@ function PaymentContent() {
                   )}
                   {selectedOrder.status === 'berhasil' && selectedOrder.bug_delivery_status === 'sent' && (
                     <div className="mt-3 pt-3 border-t border-green-500/30">
-                      <p className="text-green-300 text-sm font-bold flex items-center justify-center gap-2">
+                      <p className="text-green-300 text-xs sm:text-sm font-bold flex items-center justify-center gap-2">
                         🚀 Bug berhasil dikirim ke target!
                       </p>
                       {selectedOrder.bug_sent_at && (
@@ -570,16 +638,16 @@ function PaymentContent() {
               )}
 
               {/* Back Link */}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <a
                   href="/"
-                  className="flex-1 text-center bg-gray-800 hover:bg-gray-700 border-2 border-orange-500/50 text-orange-500 font-bold py-3 rounded-lg transition"
+                  className="flex-1 text-center bg-gray-800 hover:bg-gray-700 border-2 border-orange-500/50 text-orange-500 font-bold py-3 rounded-lg transition text-sm sm:text-base"
                 >
                   ← Home
                 </a>
                 <a
                   href="/orders"
-                  className="flex-1 text-center bg-gray-800 hover:bg-gray-700 border-2 border-blue-500/50 text-blue-500 font-bold py-3 rounded-lg transition"
+                  className="flex-1 text-center bg-gray-800 hover:bg-gray-700 border-2 border-blue-500/50 text-blue-500 font-bold py-3 rounded-lg transition text-sm sm:text-base"
                 >
                   📊 Orders
                 </a>
@@ -591,22 +659,22 @@ function PaymentContent() {
 
       {/* Preview Modal */}
       {previewFile && (
-        <div 
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-3 sm:p-4"
           onClick={() => setPreviewFile(null)}
         >
-          <div className="relative max-w-4xl max-h-full">
+          <div className="relative max-w-4xl max-h-full w-full">
             <button
               onClick={() => setPreviewFile(null)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300 font-bold text-xl"
+              className="absolute -top-8 sm:-top-10 right-0 text-white hover:text-gray-300 font-bold text-lg sm:text-xl z-10"
             >
               ✕ Tutup
             </button>
-            
+
             {previewFile.endsWith('.pdf') ? (
-              <div className="bg-white rounded-lg p-4 max-h-[80vh] overflow-auto">
-                <p className="text-gray-700 mb-2">📄 PDF Document</p>
-                <a href={previewFile} target="_blank" className="text-blue-400 hover:underline">
+              <div className="bg-white rounded-lg p-3 sm:p-4 max-h-[80vh] overflow-auto">
+                <p className="text-gray-700 mb-2 text-sm sm:text-base">📄 PDF Document</p>
+                <a href={previewFile} target="_blank" className="text-blue-400 hover:underline text-sm sm:text-base">
                   Buka PDF di tab baru
                 </a>
               </div>
@@ -614,7 +682,7 @@ function PaymentContent() {
               <img
                 src={previewFile}
                 alt="Bukti Pembayaran"
-                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+                className="w-full max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
               />
             )}
           </div>
