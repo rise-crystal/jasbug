@@ -59,43 +59,28 @@ export default function AdminPage() {
             if (remaining <= 0 && !order.payment_proof_url && order.status === 'pending') {
               try {
                 console.log('⏰ Auto-expiring order:', order.custom_id || order.id);
+                console.log('📝 Calling API to update status to expired...');
                 
-                // METHOD 1: Direct Supabase update
-                const { data, error } = await supabase
-                  .from('orders')
-                  .update({ 
-                    status: 'expired',
-                    updated_at: new Date().toISOString()
-                  })
-                  .eq('id', order.id);
+                const response = await fetch(`/api/payment/status/${order.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: 'expired' }),
+                });
 
-                if (error) {
-                  console.error('❌ Direct Supabase error:', error);
-                  console.log('🔄 Falling back to API method...');
-                  
-                  // METHOD 2: API call fallback
-                  const response = await fetch(`/api/payment/status/${order.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: 'expired' }),
-                  });
+                const result = await response.json();
+                console.log('API Response Status:', response.status);
+                console.log('API Response Data:', result);
 
-                  const result = await response.json();
-
-                  if (response.ok) {
-                    console.log('✅ SUCCESS via API method');
-                    return { ...order, status: 'expired' };
-                  } else {
-                    console.error('❌ FAILED: API error:', result.error);
-                    return order;
-                  }
+                if (response.ok) {
+                  console.log('✅ SUCCESS: Order expired in database via API');
+                  return { ...order, status: 'expired' };
+                } else {
+                  console.error('❌ FAILED: API error:', result.error);
+                  return order; // Return original order if failed
                 }
-
-                console.log('✅ SUCCESS: Order expired in database via Direct Supabase');
-                return { ...order, status: 'expired' };
               } catch (error) {
                 console.error('❌ FAILED: Auto-expire error:', error);
-                return order;
+                return order; // Return original order if error
               }
             }
 
@@ -111,10 +96,23 @@ export default function AdminPage() {
 
     fetchOrders();
     const channel = supabase.channel('admin-orders')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchOrders())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        console.log('🔄 Admin: Realtime update detected, refetching orders...');
+        fetchOrders();
+      })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // BACKUP: Polling setiap 10 detik untuk memastikan data terupdate
+    const pollingInterval = setInterval(() => {
+      console.log('📡 Admin: Polling - Refetching orders for auto-expire check...');
+      fetchOrders();
+    }, 10000); // 10 seconds
+
+    return () => { 
+      supabase.removeChannel(channel);
+      clearInterval(pollingInterval);
+      console.log('Cleanup admin subscriptions');
+    };
   }, []);
 
   const handleLogout = async () => {

@@ -70,51 +70,38 @@ function PaymentContent() {
           console.log('Created at:', selectedOrder.created_at);
           console.log('Elapsed time:', Math.floor(elapsed / 1000), 'seconds');
 
-          // METHOD 1: Direct Supabase update (lebih reliable)
+          // IMPORTANT: MUST use API endpoint (has admin access with service role key)
+          // Direct Supabase client won't work due to RLS restrictions
           try {
-            console.log('📝 METHOD 1: Direct Supabase update...');
+            console.log('📝 Calling API to update status to expired...');
             
-            const { data, error } = await supabase
-              .from('orders')
-              .update({ 
-                status: 'expired',
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', selectedOrder.id);
+            const response = await fetch(`/api/payment/status/${selectedOrder.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'expired' }),
+            });
 
-            if (error) {
-              console.error('❌ Direct Supabase error:', error);
-              console.log('🔄 Falling back to API method...');
+            const result = await response.json();
+            console.log('API Response Status:', response.status);
+            console.log('API Response Data:', result);
+
+            if (response.ok) {
+              console.log('✅ SUCCESS: Database updated to expired');
               
-              // METHOD 2: API call sebagai fallback
-              const response = await fetch(`/api/payment/status/${selectedOrder.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'expired' }),
-              });
-
-              const result = await response.json();
-
-              if (!response.ok) {
-                throw new Error(result.error || 'API update failed');
-              }
-
-              console.log('✅ SUCCESS via API method');
+              // Update states setelah berhasil
+              setSelectedOrder(prev => prev ? { ...prev, status: 'expired' } : null);
+              setOrders(prev => prev.map(o => 
+                o.id === selectedOrder.id ? { ...o, status: 'expired' } : o
+              ));
+              
+              console.log('✅ UI updated to expired');
             } else {
-              console.log('✅ SUCCESS via Direct Supabase:', data);
+              console.error('❌ FAILED: API returned error:', result.error);
+              hasUpdated = false; // Reset flag untuk retry
             }
-              
-            // Update states setelah berhasil
-            setSelectedOrder(prev => prev ? { ...prev, status: 'expired' } : null);
-            setOrders(prev => prev.map(o => 
-              o.id === selectedOrder.id ? { ...o, status: 'expired' } : o
-            ));
-            
-            console.log('✅ Database and UI updated to expired');
-            
           } catch (error) {
-            console.error('❌ FAILED: All methods failed:', error);
-            hasUpdated = false; // Reset flag agar bisa retry
+            console.error('❌ FAILED: Network error during auto-expire:', error);
+            hasUpdated = false; // Reset flag untuk retry
           }
         } else if (selectedOrder.payment_proof_url) {
           // Sudah upload bukti, stop timer tapi jangan auto-gagal
