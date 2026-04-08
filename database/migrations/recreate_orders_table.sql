@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS orders CASCADE;
 
 -- Hapus function (jika masih ada)
 DROP FUNCTION IF EXISTS generate_order_id() CASCADE;
+DROP FUNCTION IF EXISTS set_order_custom_id() CASCADE;
 
 -- ========================================
 -- BUAT TABEL BARU
@@ -68,9 +69,25 @@ CREATE TABLE orders (
 -- BUAT FUNCTION & TRIGGER
 -- ========================================
 CREATE OR REPLACE FUNCTION generate_order_id()
+RETURNS TEXT AS $$
+DECLARE
+  new_id TEXT;
+BEGIN
+  LOOP
+    new_id := 'SQID' || LPAD(FLOOR(RANDOM() * 10000000000000)::BIGINT::TEXT, 13, '0');
+    IF NOT EXISTS (SELECT 1 FROM orders WHERE custom_id = new_id) THEN
+      RETURN new_id;
+    END IF;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION set_order_custom_id()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.custom_id := 'SQID' || floor(random() * 10000000000000)::text;
+  IF NEW.custom_id IS NULL THEN
+    NEW.custom_id := generate_order_id();
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -79,7 +96,7 @@ CREATE TRIGGER set_custom_id_trigger
   BEFORE INSERT ON orders
   FOR EACH ROW
   WHEN (NEW.custom_id IS NULL)
-  EXECUTE FUNCTION generate_order_id();
+  EXECUTE FUNCTION set_order_custom_id();
 
 -- ========================================
 -- VERIFIKASI

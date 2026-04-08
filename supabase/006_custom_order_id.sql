@@ -5,6 +5,11 @@
 ALTER TABLE orders 
   ADD COLUMN IF NOT EXISTS custom_id VARCHAR(20) UNIQUE;
 
+-- Bersihkan trigger/function lama agar migration aman dijalankan ulang
+DROP TRIGGER IF EXISTS set_custom_id_trigger ON orders;
+DROP FUNCTION IF EXISTS set_order_custom_id() CASCADE;
+DROP FUNCTION IF EXISTS generate_order_id() CASCADE;
+
 -- STEP 2: Buat function untuk generate ID acak
 CREATE OR REPLACE FUNCTION generate_order_id()
 RETURNS TEXT AS $$
@@ -48,9 +53,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
--- Drop trigger jika sudah ada
-DROP TRIGGER IF EXISTS set_custom_id_trigger ON orders;
 
 -- Buat trigger baru
 CREATE TRIGGER set_custom_id_trigger
