@@ -5,7 +5,7 @@ import { getSupabase } from '@/lib/supabase';
 
 interface Order {
   id: string;
-  custom_id: string;
+  custom_id: string | null;
   phone_number: string;
   status: string;
   product_id: string | null;
@@ -20,6 +20,14 @@ const productMap: Record<string, { name: string; image: string }> = {
 };
 
 const supabase = getSupabase();
+const normalizeOrderStatus = (status: string) => status === 'pending' ? 'pending_pembayaran' : status;
+const isPendingStatus = (status: string) => ['pending', 'pending_pembayaran', 'pending_konfirmasi_admin'].includes(status);
+const matchesStatusFilter = (status: string, filterStatus: string) => {
+  if (filterStatus === 'all') return true;
+  if (filterStatus === 'pending') return isPendingStatus(status);
+
+  return normalizeOrderStatus(status) === filterStatus;
+};
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -70,7 +78,7 @@ export default function OrdersPage() {
 
     // Filter by status
     if (filterStatus !== 'all') {
-      result = result.filter(order => order.status === filterStatus);
+      result = result.filter(order => matchesStatusFilter(order.status, filterStatus));
     }
 
     // Search by custom_id or phone_number
@@ -101,11 +109,11 @@ export default function OrdersPage() {
   // Stats
   const stats = useMemo(() => ({
     total: orders.length,
-    pending_pembayaran: orders.filter(o => o.status === 'pending_pembayaran').length,
-    pending_konfirmasi_admin: orders.filter(o => o.status === 'pending_konfirmasi_admin').length,
-    berhasil: orders.filter(o => o.status === 'berhasil').length,
-    gagal: orders.filter(o => o.status === 'gagal').length,
-    expired: orders.filter(o => o.status === 'expired').length,
+    pending_pembayaran: orders.filter(o => normalizeOrderStatus(o.status) === 'pending_pembayaran').length,
+    pending_konfirmasi_admin: orders.filter(o => normalizeOrderStatus(o.status) === 'pending_konfirmasi_admin').length,
+    berhasil: orders.filter(o => normalizeOrderStatus(o.status) === 'berhasil').length,
+    gagal: orders.filter(o => normalizeOrderStatus(o.status) === 'gagal').length,
+    expired: orders.filter(o => normalizeOrderStatus(o.status) === 'expired').length,
   }), [orders]);
 
   if (loading) {
@@ -219,7 +227,9 @@ export default function OrdersPage() {
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
               >
                 <option value="all">Semua Status</option>
-                <option value="pending">Pending</option>
+                <option value="pending">Semua Pending</option>
+                <option value="pending_pembayaran">Menunggu Pembayaran</option>
+                <option value="pending_konfirmasi_admin">Menunggu Verifikasi</option>
                 <option value="berhasil">Berhasil</option>
                 <option value="gagal">Gagal</option>
                 <option value="expired">Expired</option>
@@ -292,7 +302,9 @@ export default function OrdersPage() {
               <div className="space-y-3">
                 {paginatedOrders.map((order) => {
                   const product = order.product_id ? productMap[order.product_id] : null;
+                  const displayStatus = normalizeOrderStatus(order.status);
                   const statusStyles = {
+                    pending: 'bg-yellow-900/50 border-yellow-500/50 text-yellow-400',
                     pending_pembayaran: 'bg-yellow-900/50 border-yellow-500/50 text-yellow-400',
                     pending_konfirmasi_admin: 'bg-orange-900/50 border-orange-500/50 text-orange-400',
                     berhasil: 'bg-green-900/50 border-green-500/50 text-green-400',
@@ -341,22 +353,22 @@ export default function OrdersPage() {
                           )}
                           <span
                             className={`px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-bold border ${
-                              statusStyles[order.status as keyof typeof statusStyles] || 'bg-gray-800 border-gray-600 text-gray-400'
+                              statusStyles[displayStatus as keyof typeof statusStyles] || 'bg-gray-800 border-gray-600 text-gray-400'
                             }`}
                             title={
-                              order.status === 'pending_pembayaran' ? 'Menunggu pembayaran' :
-                              order.status === 'pending_konfirmasi_admin' ? 'Menunggu verifikasi admin' :
-                              order.status === 'berhasil' ? 'Bug berhasil terkirim ke nomor tujuan' :
-                              order.status === 'gagal' ? 'Pembayaran ditolak oleh admin' :
-                              order.status === 'expired' ? 'Pembayaran expired/gagal - waktu habis atau masalah lain' :
+                              displayStatus === 'pending_pembayaran' ? 'Menunggu pembayaran' :
+                              displayStatus === 'pending_konfirmasi_admin' ? 'Menunggu verifikasi admin' :
+                              displayStatus === 'berhasil' ? 'Bug berhasil terkirim ke nomor tujuan' :
+                              displayStatus === 'gagal' ? 'Pembayaran ditolak oleh admin' :
+                              displayStatus === 'expired' ? 'Pembayaran expired/gagal - waktu habis atau masalah lain' :
                               ''
                             }
                           >
-                            {order.status === 'pending_pembayaran' && '⏳ Menunggu Pembayaran'}
-                            {order.status === 'pending_konfirmasi_admin' && '📋 Menunggu Verifikasi Admin'}
-                            {order.status === 'berhasil' && '✅ Bug Terkirim'}
-                            {order.status === 'gagal' && '❌ Ditolak Admin'}
-                            {order.status === 'expired' && '⏰ Expired/Gagal'}
+                            {displayStatus === 'pending_pembayaran' && '⏳ Menunggu Pembayaran'}
+                            {displayStatus === 'pending_konfirmasi_admin' && '📋 Menunggu Verifikasi Admin'}
+                            {displayStatus === 'berhasil' && '✅ Bug Terkirim'}
+                            {displayStatus === 'gagal' && '❌ Ditolak Admin'}
+                            {displayStatus === 'expired' && '⏰ Expired/Gagal'}
                           </span>
                         </div>
                       </div>

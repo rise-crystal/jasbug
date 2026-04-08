@@ -3,8 +3,18 @@ CREATE TABLE IF NOT EXISTS orders (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   phone_number VARCHAR(20) NOT NULL,
   product_id VARCHAR(50),
-  status VARCHAR(30) DEFAULT 'pending' NOT NULL,
+  status VARCHAR(30) DEFAULT 'pending_pembayaran' NOT NULL,
   dana_transaction_id VARCHAR(100),
+  qris_string TEXT,
+  payment_amount INTEGER,
+  payment_proof_url TEXT,
+  payment_proof_verified BOOLEAN DEFAULT FALSE,
+  payment_proof_verified_at TIMESTAMP WITH TIME ZONE,
+  payment_verified_by UUID,
+  custom_id VARCHAR(20),
+  verification_notes TEXT,
+  bug_sent_at TIMESTAMP WITH TIME ZONE,
+  bug_delivery_status VARCHAR(50) DEFAULT 'pending',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
@@ -12,6 +22,9 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE INDEX IF NOT EXISTS idx_orders_phone_number ON orders(phone_number);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_custom_id ON orders(custom_id) WHERE custom_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_orders_payment_proof ON orders(payment_proof_url) WHERE payment_proof_url IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_orders_bug_delivery ON orders(bug_delivery_status) WHERE bug_delivery_status IS NOT NULL;
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;

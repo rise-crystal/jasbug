@@ -78,6 +78,6 @@ END $$;
 CREATE INDEX IF NOT EXISTS idx_orders_custom_id ON orders(custom_id) WHERE custom_id IS NOT NULL;
 
 -- SELESAI! Test dengan:
--- INSERT INTO orders (phone_number, status) VALUES ('081234567890', 'pending');
+-- INSERT INTO orders (phone_number, status) VALUES ('081234567890', 'pending_pembayaran');
 -- SELECT custom_id FROM orders ORDER BY created_at DESC LIMIT 1;
 -- Hasil: SQID + 13 digit acak (contoh: SQID4829103847562)

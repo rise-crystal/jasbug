@@ -46,6 +46,54 @@ export async function POST(request: NextRequest) {
       'ℹ️ payment_amount akan ditambahkan via migration'
     );
 
+    await execSql(
+      'ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_proof_url TEXT',
+      '✅ payment_proof_url column added',
+      'ℹ️ payment_proof_url akan ditambahkan via migration'
+    );
+
+    await execSql(
+      'ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_proof_verified BOOLEAN DEFAULT FALSE',
+      '✅ payment_proof_verified column added',
+      'ℹ️ payment_proof_verified akan ditambahkan via migration'
+    );
+
+    await execSql(
+      'ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_proof_verified_at TIMESTAMP WITH TIME ZONE',
+      '✅ payment_proof_verified_at column added',
+      'ℹ️ payment_proof_verified_at akan ditambahkan via migration'
+    );
+
+    await execSql(
+      'ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_verified_by UUID',
+      '✅ payment_verified_by column added',
+      'ℹ️ payment_verified_by akan ditambahkan via migration'
+    );
+
+    await execSql(
+      'ALTER TABLE orders ADD COLUMN IF NOT EXISTS custom_id VARCHAR(20)',
+      '✅ custom_id column added',
+      'ℹ️ custom_id akan ditambahkan via migration'
+    );
+
+    await execSql(
+      'ALTER TABLE orders ADD COLUMN IF NOT EXISTS verification_notes TEXT',
+      '✅ verification_notes column added',
+      'ℹ️ verification_notes akan ditambahkan via migration'
+    );
+
+    await execSql(
+      'ALTER TABLE orders ADD COLUMN IF NOT EXISTS bug_sent_at TIMESTAMP WITH TIME ZONE',
+      '✅ bug_sent_at column added',
+      'ℹ️ bug_sent_at akan ditambahkan via migration'
+    );
+
+    await execSql(
+      "ALTER TABLE orders ADD COLUMN IF NOT EXISTS bug_delivery_status VARCHAR(50) DEFAULT 'pending'",
+      '✅ bug_delivery_status column added',
+      'ℹ️ bug_delivery_status akan ditambahkan via migration'
+    );
+
     // Perbaiki kolom status agar muat nilai pending_konfirmasi_admin
     await execSql(
       'ALTER TABLE orders ALTER COLUMN status TYPE VARCHAR(30)',
@@ -57,6 +105,18 @@ export async function POST(request: NextRequest) {
       "ALTER TABLE orders ALTER COLUMN status SET DEFAULT 'pending_pembayaran'",
       '✅ status default updated to pending_pembayaran',
       'ℹ️ status default akan diperbarui via migration'
+    );
+
+    await execSql(
+      "ALTER TABLE orders ALTER COLUMN payment_proof_verified SET DEFAULT FALSE",
+      '✅ payment_proof_verified default updated to false',
+      'ℹ️ default payment_proof_verified akan diperbarui via migration'
+    );
+
+    await execSql(
+      "ALTER TABLE orders ALTER COLUMN bug_delivery_status SET DEFAULT 'pending'",
+      '✅ bug_delivery_status default updated to pending',
+      'ℹ️ default bug_delivery_status akan diperbarui via migration'
     );
 
     await execSql(
@@ -94,8 +154,11 @@ export async function GET(request: NextRequest) {
     message: 'Fix schema endpoint',
     usage: 'POST to this endpoint to add missing columns and fix status schema',
     migrations: [
+      'supabase/001_create_orders_table.sql',
       'supabase/003_add_qris_payment_columns.sql',
-      'supabase/004_add_product_id_column.sql',
+      'supabase/005_setup_payment_proof_storage.sql',
+      'supabase/006_custom_order_id.sql',
+      'supabase/007_add_bug_tracking.sql',
       'supabase/008_fix_order_status_column_length.sql',
     ],
   });

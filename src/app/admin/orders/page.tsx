@@ -6,7 +6,7 @@ import { getSupabase } from '@/lib/supabase';
 
 interface Order {
   id: string;
-  custom_id: string;
+  custom_id: string | null;
   phone_number: string;
   status: string;
   product_id: string | null;
@@ -21,6 +21,14 @@ const productMap: Record<string, { name: string; image: string }> = {
 };
 
 const supabase = getSupabase();
+const normalizeOrderStatus = (status: string) => status === 'pending' ? 'pending_pembayaran' : status;
+const isPendingStatus = (status: string) => ['pending', 'pending_pembayaran', 'pending_konfirmasi_admin'].includes(status);
+const matchesStatusFilter = (status: string, filterStatus: string) => {
+  if (filterStatus === 'all') return true;
+  if (filterStatus === 'pending') return isPendingStatus(status);
+
+  return normalizeOrderStatus(status) === filterStatus;
+};
 
 export default function AdminOrdersPage() {
   const router = useRouter();
@@ -169,7 +177,7 @@ export default function AdminOrdersPage() {
     const matchesSearch = searchQuery === '' ||
       order.custom_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.phone_number?.includes(searchQuery);
-    const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
+    const matchesStatus = matchesStatusFilter(order.status, filterStatus);
     return matchesSearch && matchesStatus;
   });
 
@@ -186,6 +194,7 @@ export default function AdminOrdersPage() {
   }, [searchQuery, filterStatus, rowsPerPage]);
 
   const statusColors: Record<string, string> = {
+    pending: 'bg-yellow-900/50 border-yellow-500/50 text-yellow-400',
     pending_pembayaran: 'bg-yellow-900/50 border-yellow-500/50 text-yellow-400',
     pending_konfirmasi_admin: 'bg-orange-900/50 border-orange-500/50 text-orange-400',
     berhasil: 'bg-green-900/50 border-green-500/50 text-green-400',
@@ -253,7 +262,9 @@ export default function AdminOrdersPage() {
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
             >
               <option value="all">Semua Status</option>
-              <option value="pending">Pending</option>
+              <option value="pending">Semua Pending</option>
+              <option value="pending_pembayaran">Menunggu Pembayaran</option>
+              <option value="pending_konfirmasi_admin">Menunggu Verifikasi</option>
               <option value="berhasil">Berhasil</option>
               <option value="gagal">Gagal</option>
               <option value="expired">Expired</option>
@@ -340,6 +351,7 @@ export default function AdminOrdersPage() {
               {paginatedOrders.map((order) => {
                 const product = order.product_id ? productMap[order.product_id] : null;
                 const isSelected = selectedOrders.has(order.id);
+                const displayStatus = normalizeOrderStatus(order.status);
 
                 return (
                   <div key={order.id} className={`bg-gray-800 border-2 rounded-xl p-4 sm:p-5 transition-all ${isSelected ? 'border-orange-500 shadow-lg shadow-orange-500/20' : 'border-blue-500/30 hover:border-blue-500/70'}`}>
@@ -354,21 +366,21 @@ export default function AdminOrdersPage() {
                         <div className="flex flex-wrap items-center gap-2 mb-3">
                           <span className="font-mono text-xs text-blue-400 bg-gray-900 px-2 sm:px-3 py-1.5 rounded-lg border border-blue-500/30 font-bold truncate">{order.custom_id || order.id}</span>
                           <span className="text-xs text-gray-500">{new Date(order.created_at).toLocaleString('id-ID')}</span>
-                          <span className={`px-2 py-1 rounded text-xs font-bold border ${statusColors[order.status] || 'bg-gray-800 border-gray-600 text-gray-400'}`}
+                          <span className={`px-2 py-1 rounded text-xs font-bold border ${statusColors[displayStatus] || 'bg-gray-800 border-gray-600 text-gray-400'}`}
                             title={
-                              order.status === 'pending_pembayaran' ? 'Menunggu pembayaran' :
-                              order.status === 'pending_konfirmasi_admin' ? 'Menunggu verifikasi admin' :
-                              order.status === 'berhasil' ? 'Bug berhasil terkirim ke nomor tujuan' :
-                              order.status === 'gagal' ? 'Pembayaran ditolak oleh admin' :
-                              order.status === 'expired' ? 'Pembayaran expired/gagal - waktu habis atau masalah lain' :
+                              displayStatus === 'pending_pembayaran' ? 'Menunggu pembayaran' :
+                              displayStatus === 'pending_konfirmasi_admin' ? 'Menunggu verifikasi admin' :
+                              displayStatus === 'berhasil' ? 'Bug berhasil terkirim ke nomor tujuan' :
+                              displayStatus === 'gagal' ? 'Pembayaran ditolak oleh admin' :
+                              displayStatus === 'expired' ? 'Pembayaran expired/gagal - waktu habis atau masalah lain' :
                               ''
                             }
                           >
-                            {order.status === 'pending_pembayaran' && '⏳ Menunggu Pembayaran'}
-                            {order.status === 'pending_konfirmasi_admin' && '📋 Menunggu Verifikasi Admin'}
-                            {order.status === 'berhasil' && '✅ Bug Terkirim'}
-                            {order.status === 'gagal' && '❌ Ditolak Admin'}
-                            {order.status === 'expired' && '⏰ Expired/Gagal'}
+                            {displayStatus === 'pending_pembayaran' && '⏳ Menunggu Pembayaran'}
+                            {displayStatus === 'pending_konfirmasi_admin' && '📋 Menunggu Verifikasi Admin'}
+                            {displayStatus === 'berhasil' && '✅ Bug Terkirim'}
+                            {displayStatus === 'gagal' && '❌ Ditolak Admin'}
+                            {displayStatus === 'expired' && '⏰ Expired/Gagal'}
                           </span>
                         </div>
 

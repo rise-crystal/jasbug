@@ -6,7 +6,7 @@ import { getSupabase } from '@/lib/supabase';
 
 interface Order {
   id: string;
-  custom_id: string;
+  custom_id: string | null;
   phone_number: string;
   status: string;
   product_id: string | null;
