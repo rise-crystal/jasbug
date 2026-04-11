@@ -38,6 +38,17 @@ export default function AdminPage() {
     }
 
     const fetchOrders = async () => {
+      // Pertama, panggil auto-expire API untuk memastikan semua order yang expired terupdate
+      try {
+        await fetch('/api/payment/auto-expire', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        console.log('✅ Auto-expire API called');
+      } catch (error) {
+        console.error('⚠️ Auto-expire API call failed:', error);
+      }
+
       const { data, error } = await supabase
         .from('orders')
         .select('*')
@@ -45,51 +56,8 @@ export default function AdminPage() {
         .order('created_at', { ascending: false });
 
       if (data) {
-        // Auto-expire order yang sudah lewat 5 menit tanpa bukti pembayaran
-        const now = Date.now();
-        const fiveMinutes = 5 * 60 * 1000;
-
-        const processedOrders = await Promise.all(
-          data.map(async (order) => {
-            const createdAt = new Date(order.created_at).getTime();
-            const elapsed = now - createdAt;
-            const remaining = fiveMinutes - elapsed;
-
-            // Jika sudah expired dan belum ada bukti, auto-set ke expired
-            if (remaining <= 0 && !order.payment_proof_url && order.status === 'pending_pembayaran') {
-              try {
-                console.log('⏰ Auto-expiring order:', order.custom_id || order.id);
-                console.log('📝 Calling API to update status to expired...');
-
-                const response = await fetch(`/api/payment/status/${order.id}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ status: 'expired' }),
-                });
-
-                const result = await response.json();
-                console.log('API Response Status:', response.status);
-                console.log('API Response Data:', result);
-
-                if (response.ok && result.success) {
-                  console.log('✅ SUCCESS: Order expired in database via API');
-                  return { ...order, status: 'expired' };
-                } else {
-                  console.error('❌ FAILED: API error:', result.error);
-                  return order; // Return original order if failed
-                }
-              } catch (error) {
-                console.error('❌ FAILED: Auto-expire error:', error);
-                return order; // Return original order if error
-              }
-            }
-
-            return order;
-          })
-        );
-
-        // Filter hanya order yang masih pending (yang expired akan otomatis terfilter)
-        setOrders(processedOrders.filter(o => o.status === 'pending_pembayaran' || o.status === 'pending_konfirmasi_admin'));
+        // Langsung set orders (auto-expire API sudah handle di server)
+        setOrders(data);
       }
       setLoading(false);
     };
