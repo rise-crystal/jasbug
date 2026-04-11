@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co https://*.tenor.com",
+              "connect-src 'self' https://*.supabase.co https://*.tenor.com https://*.vercel.app",
               "media-src 'self' https://*.tenor.com",
               "frame-src 'none'",
               "frame-ancestors 'none'",
