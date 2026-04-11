@@ -79,11 +79,19 @@ File `vercel.json` sudah dikonfigurasi untuk menjalankan auto-expire setiap 1 me
 ### Manual Testing di Production
 ```bash
 # Preview order yang akan expire
-curl https://your-domain.vercel.app/api/payment/auto-expire
+curl https://jasbug.vercel.app/api/payment/auto-expire
 
 # Expire semua order yang sudah lewat 5 menit
-curl -X POST https://your-domain.vercel.app/api/payment/auto-expire
+curl -X POST https://jasbug.vercel.app/api/payment/auto-expire
 ```
+
+### Troubleshooting 404 Error
+Jika mendapat error 404 saat mengakses endpoint:
+
+1. **Tunggu deployment selesai** - Cek status di Vercel Dashboard → Deployments
+2. **Hard refresh browser** - Tekan `Ctrl + Shift + R` atau `Ctrl + F5`
+3. **Cek logs di Vercel** - Buka Deployment → Functions → cari `/api/payment/auto-expire`
+4. **Test lokal dulu** - Pastikan endpoint bekerja di local development
 
 ## Usage
 
