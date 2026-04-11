@@ -70,7 +70,7 @@ export default function AdminOrdersPage() {
               try {
                 console.log('⏰ Auto-expiring order:', order.custom_id || order.id);
                 console.log('📝 Calling API to update status to expired...');
-                
+
                 const response = await fetch(`/api/payment/status/${order.id}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
@@ -81,7 +81,7 @@ export default function AdminOrdersPage() {
                 console.log('API Response Status:', response.status);
                 console.log('API Response Data:', result);
 
-                if (response.ok) {
+                if (response.ok && result.success) {
                   console.log('✅ SUCCESS: Order expired in database via API');
                   return { ...order, status: 'expired' };
                 } else {

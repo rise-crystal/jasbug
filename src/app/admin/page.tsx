@@ -71,7 +71,7 @@ export default function AdminPage() {
                 console.log('API Response Status:', response.status);
                 console.log('API Response Data:', result);
 
-                if (response.ok) {
+                if (response.ok && result.success) {
                   console.log('✅ SUCCESS: Order expired in database via API');
                   return { ...order, status: 'expired' };
                 } else {
