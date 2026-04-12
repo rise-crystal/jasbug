@@ -6,27 +6,25 @@ export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/payment/auto-expire
- * 
+ *
  * Auto-expire semua order dengan status 'pending_pembayaran' yang sudah lewat 5 menit.
  * Endpoint ini bisa dipanggil manual atau via cron job.
- * 
- * Security: Hanya bisa dipanggil oleh admin (memerlukan secret key)
+ *
+ * Security: Memerlukan CRON_SECRET header dari Vercel Cron Jobs
  */
 export async function POST(request: NextRequest) {
   try {
-    // Validasi admin secret key (opsional, bisa dihapus jika tidak diperlukan)
+    // Validasi CRON_SECRET dari Vercel
+    // Vercel secara otomatis menambahkan CRON_SECRET ke header Authorization
+    // sebagai "Bearer <CRON_SECRET>" saat cron job dipanggil
+    const cronSecret = process.env.CRON_SECRET;
     const authHeader = request.headers.get('authorization');
-    const secretKey = process.env.ADMIN_SECRET_KEY;
-    
-    if (secretKey && authHeader !== `Bearer ${secretKey}`) {
-      // Cek juga body untuk backward compatibility
-      const body = await request.json().catch(() => ({}));
-      if (body.secretKey !== secretKey) {
-        return NextResponse.json(
-          { error: 'Unauthorized' },
-          { status: 401 }
-        );
-      }
+
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Invalid or missing CRON_SECRET' },
+        { status: 401 }
+      );
     }
 
     const supabaseAdmin = getSupabaseAdmin();
