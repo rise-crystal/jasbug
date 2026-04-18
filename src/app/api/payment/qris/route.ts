@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { QRISDinamis } from '@/lib/qris-dinamis';
+import { getSafeJakartaNowMs, shouldAutoExpirePayment } from '@/lib/payment-expiry';
 
 // QRIS statis dasar dari merchant (contoh: DANA)
 // Ganti dengan QRIS statis merchant Anda yang sebenarnya
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
     console.log('Fetching order from database...');
     const { data: order, error: fetchError } = await supabaseAdmin
       .from('orders')
-      .select('id, status, product_id')
+      .select('id, status, product_id, created_at, payment_proof_url')
       .or(`id.eq.${orderId},custom_id.eq.${orderId}`)
       .single();
 
@@ -47,6 +48,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Order tidak ditemukan' },
         { status: 404 }
+      );
+    }
+
+    const nowMs = await getSafeJakartaNowMs();
+
+    if (shouldAutoExpirePayment(order, nowMs)) {
+      await supabaseAdmin
+        .from('orders')
+        .update({ status: 'expired' })
+        .eq('id', order.id);
+
+      return NextResponse.json(
+        { error: 'Order sudah expired. Batas pembayaran adalah 5 menit.' },
+        { status: 400 }
       );
     }
 

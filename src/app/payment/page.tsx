@@ -37,23 +37,37 @@ function PaymentContent() {
   const [generatingQR, setGeneratingQR] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [uploadingProof, setUploadingProof] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isExpired, setIsExpired] = useState(false);
 
   // Check if order is expired (5 minutes timeout) - Refs untuk tracking state
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const serverTimeOffsetRef = useRef(0);
   const hasUpdatedRef = useRef(false);
   const createdAtRef = useRef(0);
   const expireIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const stopPaymentPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+  };
+
+  const syncClockFromServer = (serverNowMs?: number) => {
+    if (typeof serverNowMs === 'number') {
+      serverTimeOffsetRef.current = serverNowMs - Date.now();
+    }
+  };
+
   // Reset refs ketika order berubah
   useEffect(() => {
     if (selectedOrder?.id) {
-      hasUpdatedRef.current = false;
+      hasUpdatedRef.current = selectedOrder.status === 'expired';
       createdAtRef.current = selectedOrder.created_at ? new Date(selectedOrder.created_at).getTime() : 0;
-      setIsExpired(false);
+      setIsExpired(selectedOrder.status === 'expired');
       setTimeLeft(0);
       
       // Clear interval sebelumnya jika ada
@@ -79,7 +93,7 @@ function PaymentContent() {
     const orderId = selectedOrder.id;
 
     const checkExpiry = () => {
-      const now = Date.now();
+      const now = Date.now() + serverTimeOffsetRef.current;
       const elapsed = now - createdAtRef.current;
       const remaining = fiveMinutes - elapsed;
 
@@ -96,33 +110,39 @@ function PaymentContent() {
         setIsExpired(true);
         setTimeLeft(0);
 
-        console.log('⏰ Order expired! Updating database to status: expired');
+        console.log('⏰ Order expired! Syncing status from server...');
         console.log('Order ID:', orderId);
 
-        // Update database dengan retry mechanism
-        const updateToExpired = async (retryCount = 0) => {
+        // Minta server melakukan auto-expire berdasarkan timeapi.io
+        const syncExpiredStatus = async (retryCount = 0) => {
           try {
             const response = await fetch(`/api/payment/status/${orderId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'expired' }),
+              cache: 'no-store',
             });
 
             const result = await response.json();
+            syncClockFromServer(result.serverNowMs);
 
-            if (response.ok && result.success) {
+            if (response.ok && result.success && result.order) {
               console.log('✅ SUCCESS: Database updated to expired');
               // Update local state
-              setSelectedOrder(prev => prev ? { ...prev, status: 'expired' } : null);
+              setSelectedOrder(result.order);
               setOrders(prev => prev.map(o =>
-                o.id === orderId ? { ...o, status: 'expired' } : o
+                o.id === result.order.id ? result.order : o
               ));
+              setIsExpired(result.order.status === 'expired');
+              setQrCodeDataUrl(null);
+              stopPaymentPolling();
+
+              if (result.order.status === 'expired') {
+                return;
+              }
             } else {
-              console.error('❌ FAILED:', result.error);
+              console.error('❌ FAILED:', result.error || 'Status belum expired di server');
               // Retry jika gagal dan masih dalam batas waktu
               if (retryCount < 3) {
                 console.log(`🔄 Retrying... (${retryCount + 1}/3)`);
-                setTimeout(() => updateToExpired(retryCount + 1), 2000);
+                setTimeout(() => syncExpiredStatus(retryCount + 1), 2000);
               }
             }
           } catch (error) {
@@ -130,13 +150,12 @@ function PaymentContent() {
             // Retry jika error
             if (retryCount < 3) {
               console.log(`🔄 Retrying... (${retryCount + 1}/3)`);
-              setTimeout(() => updateToExpired(retryCount + 1), 2000);
+              setTimeout(() => syncExpiredStatus(retryCount + 1), 2000);
             }
           }
         };
 
-        // Jalankan update
-        updateToExpired();
+        syncExpiredStatus();
       } else if (remaining > 0) {
         setTimeLeft(Math.floor(remaining / 1000));
       }
@@ -186,16 +205,38 @@ function PaymentContent() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .or(`id.eq.${orderParam},custom_id.eq.${orderParam}`)
-        .single();
+      try {
+        const response = await fetch(`/api/payment/status/${orderParam}`, {
+          cache: 'no-store',
+        });
+        const result = await response.json();
 
-      if (data && (data.status === 'pending_pembayaran' || data.status === 'pending_konfirmasi_admin')) {
-        setOrders([data]);
-        handleOrderClick(data);
+        if (!response.ok || !result.success || !result.order) {
+          setSelectedOrder(null);
+          stopPaymentPolling();
+          setQrCodeDataUrl(null);
+          setLoading(false);
+          return;
+        }
+
+        syncClockFromServer(result.serverNowMs);
+        setOrders([result.order]);
+        setSelectedOrder(result.order);
+        setIsExpired(Boolean(result.isExpired));
+        setTimeLeft(Math.max(0, Math.floor((result.remainingMs ?? 0) / 1000)));
+
+        if (result.order.status === 'pending_pembayaran' || result.order.status === 'pending_konfirmasi_admin') {
+          handleOrderClick(result.order);
+        } else {
+          stopPaymentPolling();
+          setQrCodeDataUrl(null);
+        }
+      } catch (error) {
+        console.error('Fetch order error:', error);
+        setSelectedOrder(null);
+        stopPaymentPolling();
       }
+
       setLoading(false);
     };
 
@@ -220,11 +261,9 @@ function PaymentContent() {
 
     return () => {
       supabase.removeChannel(channel);
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
+      stopPaymentPolling();
     };
-  }, [pollingInterval, orderParam]);
+  }, [orderParam]);
 
   const handleGenerateQR = async (orderId: string) => {
     setGeneratingQR(orderId);
@@ -272,39 +311,40 @@ function PaymentContent() {
   };
 
   const startPaymentPolling = (orderId: string) => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-    }
+    stopPaymentPolling();
 
-    const interval = setInterval(async () => {
+    pollingIntervalRef.current = setInterval(async () => {
       try {
-        const response = await fetch(`/api/payment/status/${orderId}`);
+        const response = await fetch(`/api/payment/status/${orderId}`, {
+          cache: 'no-store',
+        });
         const data = await response.json();
 
         if (data.success && data.order) {
+          syncClockFromServer(data.serverNowMs);
           setOrders(prev => prev.map(order => 
             order.id === orderId ? data.order : order
           ));
+          setSelectedOrder(data.order);
+          setIsExpired(Boolean(data.isExpired));
+          setTimeLeft(Math.max(0, Math.floor((data.remainingMs ?? 0) / 1000)));
 
           // Stop polling if status is final (not pending)
           if (data.order.status !== 'pending_pembayaran' && data.order.status !== 'pending_konfirmasi_admin') {
-            clearInterval(interval);
-            setPollingInterval(null);
+            stopPaymentPolling();
             setQrCodeDataUrl(null);
-            setSelectedOrder(null);
           }
         }
       } catch (error) {
         console.error('Payment status check error:', error);
       }
     }, 3000);
-
-    setPollingInterval(interval);
   };
 
   const handleOrderClick = (order: Order) => {
     if (order.status === 'pending_pembayaran' || order.status === 'pending_konfirmasi_admin') {
       setSelectedOrder(order);
+      startPaymentPolling(order.id);
       
       if (order.qris_string) {
         console.log('Generating QR from existing qris_string');
@@ -321,6 +361,11 @@ function PaymentContent() {
         console.log('No existing qris_string, waiting for generate');
         setQrCodeDataUrl(null);
       }
+    } else {
+      stopPaymentPolling();
+      setQrCodeDataUrl(null);
+      setSelectedOrder(order);
+      setIsExpired(order.status === 'expired');
     }
   };
 

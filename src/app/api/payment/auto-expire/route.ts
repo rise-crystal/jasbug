@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getPaymentExpiryState, getSafeJakartaNowMs, shouldAutoExpirePayment } from '@/lib/payment-expiry';
 
 // Force dynamic rendering untuk API endpoint
 export const dynamic = 'force-dynamic';
@@ -19,8 +20,18 @@ export async function POST(request: NextRequest) {
     // sebagai "Bearer <CRON_SECRET>" saat cron job dipanggil
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = request.headers.get('authorization');
+    const originHeader = request.headers.get('origin');
+    let isSameOriginBrowserRequest = false;
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (originHeader) {
+      try {
+        isSameOriginBrowserRequest = new URL(originHeader).host === new URL(request.url).host;
+      } catch {
+        isSameOriginBrowserRequest = false;
+      }
+    }
+
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}` && !isSameOriginBrowserRequest) {
       return NextResponse.json(
         { error: 'Unauthorized: Invalid or missing CRON_SECRET' },
         { status: 401 }
@@ -37,15 +48,14 @@ export async function POST(request: NextRequest) {
 
     console.log('⏰ Starting auto-expire process...');
 
-    // Ambil semua order dengan status 'pending_pembayaran' yang dibuat lebih dari 5 menit yang lalu
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const nowMs = await getSafeJakartaNowMs();
 
-    const { data: expiredOrders, error: fetchError } = await supabaseAdmin
+    const { data: pendingOrders, error: fetchError } = await supabaseAdmin
       .from('orders')
-      .select('id, custom_id, created_at, status')
+      .select('id, custom_id, created_at, status, payment_proof_url')
       .eq('status', 'pending_pembayaran')
-      .is('payment_proof_url', null) // Hanya yang belum upload bukti
-      .lt('created_at', fiveMinutesAgo);
+      .is('payment_proof_url', null)
+      .order('created_at', { ascending: true });
 
     if (fetchError) {
       console.error('Error fetching expired orders:', fetchError);
@@ -55,11 +65,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const expiredOrders = (pendingOrders || []).filter(order => shouldAutoExpirePayment(order, nowMs));
+
     if (!expiredOrders || expiredOrders.length === 0) {
       console.log('✅ No expired orders found');
       return NextResponse.json({
         success: true,
         message: 'Tidak ada order yang perlu di-expire',
+        serverNowMs: nowMs,
         expiredCount: 0,
         expiredOrders: [],
       });
@@ -88,6 +101,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `Berhasil expire ${expiredOrders.length} order(s)`,
+      serverNowMs: nowMs,
       expiredCount: expiredOrders.length,
       expiredOrders: expiredOrders.map(order => ({
         id: order.id,
@@ -95,6 +109,7 @@ export async function POST(request: NextRequest) {
         created_at: order.created_at,
         previousStatus: order.status,
         newStatus: 'expired',
+        minutesAgo: Math.floor((nowMs - new Date(order.created_at).getTime()) / 60000),
       })),
     });
   } catch (error) {
@@ -121,15 +136,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Ambil semua order dengan status 'pending_pembayaran' yang dibuat lebih dari 5 menit yang lalu
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const nowMs = await getSafeJakartaNowMs();
 
-    const { data: expiredOrders, error: fetchError } = await supabaseAdmin
+    const { data: pendingOrders, error: fetchError } = await supabaseAdmin
       .from('orders')
       .select('id, custom_id, created_at, status, payment_proof_url')
       .eq('status', 'pending_pembayaran')
       .is('payment_proof_url', null)
-      .lt('created_at', fiveMinutesAgo)
       .order('created_at', { ascending: true });
 
     if (fetchError) {
@@ -140,15 +153,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const expiredOrders = (pendingOrders || []).filter(order => shouldAutoExpirePayment(order, nowMs));
+
     return NextResponse.json({
       success: true,
+      serverNowMs: nowMs,
       expiredCount: expiredOrders?.length || 0,
       expiredOrders: expiredOrders?.map(order => ({
         id: order.id,
         custom_id: order.custom_id,
         created_at: order.created_at,
         status: order.status,
-        minutesAgo: Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000),
+        minutesAgo: Math.floor((nowMs - new Date(order.created_at).getTime()) / 60000),
+        remainingMs: Math.max(0, getPaymentExpiryState(order.created_at, nowMs).remainingMs),
       })) || [],
     });
   } catch (error) {

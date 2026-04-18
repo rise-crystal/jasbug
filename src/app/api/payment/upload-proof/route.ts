@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSafeJakartaNowMs, shouldAutoExpirePayment } from '@/lib/payment-expiry';
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     // Pastikan order memang ada sebelum file di-upload ke storage
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
-      .select('id, custom_id, status')
+      .select('id, custom_id, status, created_at, payment_proof_url')
       .or(`id.eq.${orderId},custom_id.eq.${orderId}`)
       .maybeSingle();
 
@@ -60,6 +61,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Order tidak ditemukan' },
         { status: 404 }
+      );
+    }
+
+    const nowMs = await getSafeJakartaNowMs();
+
+    if (shouldAutoExpirePayment(order, nowMs)) {
+      await supabaseAdmin
+        .from('orders')
+        .update({ status: 'expired' })
+        .eq('id', order.id);
+
+      return NextResponse.json(
+        { error: 'Order sudah expired. Upload bukti dibatasi maksimal 5 menit.' },
+        { status: 400 }
       );
     }
 

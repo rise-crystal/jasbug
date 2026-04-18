@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getPaymentExpiryState, getSafeJakartaNowMs, shouldAutoExpirePayment } from '@/lib/payment-expiry';
 
 // Force dynamic rendering untuk API endpoint
 export const dynamic = 'force-dynamic';
@@ -41,21 +42,51 @@ export async function GET(
       );
     }
 
+    const nowMs = await getSafeJakartaNowMs();
+    let currentOrder = order;
+
+    if (shouldAutoExpirePayment(currentOrder, nowMs)) {
+      const { data: updatedOrder, error: updateError } = await supabaseAdmin
+        .from('orders')
+        .update({ status: 'expired' })
+        .eq('id', currentOrder.id)
+        .select('*')
+        .single();
+
+      if (updateError || !updatedOrder) {
+        console.error('Auto-expire during status check failed:', updateError);
+        return NextResponse.json(
+          { error: 'Gagal auto-expire order', details: updateError?.message || 'Unknown error' },
+          { status: 500 }
+        );
+      }
+
+      currentOrder = updatedOrder;
+    }
+
+    const expiryState = getPaymentExpiryState(currentOrder.created_at, nowMs);
+
     return NextResponse.json({
       success: true,
+      serverNowMs: nowMs,
+      expiresAtMs: expiryState.expiresAtMs,
+      remainingMs: Math.max(0, expiryState.remainingMs),
+      isExpired: currentOrder.status === 'expired' || expiryState.isExpired,
       order: {
-        id: order.id,
-        custom_id: order.custom_id,
-        phone_number: order.phone_number,
-        status: order.status,
-        product_id: order.product_id,
-        payment_amount: order.payment_amount,
-        qris_string: order.qris_string,
-        dana_transaction_id: order.dana_transaction_id,
-        payment_proof_url: order.payment_proof_url,
-        payment_proof_verified: order.payment_proof_verified,
-        created_at: order.created_at,
-        updated_at: order.updated_at,
+        id: currentOrder.id,
+        custom_id: currentOrder.custom_id,
+        phone_number: currentOrder.phone_number,
+        status: currentOrder.status,
+        product_id: currentOrder.product_id,
+        payment_amount: currentOrder.payment_amount,
+        qris_string: currentOrder.qris_string,
+        dana_transaction_id: currentOrder.dana_transaction_id,
+        payment_proof_url: currentOrder.payment_proof_url,
+        payment_proof_verified: currentOrder.payment_proof_verified,
+        payment_proof_verified_at: currentOrder.payment_proof_verified_at,
+        bug_delivery_status: currentOrder.bug_delivery_status,
+        bug_sent_at: currentOrder.bug_sent_at,
+        created_at: currentOrder.created_at,
       },
     });
   } catch (error) {
@@ -104,12 +135,14 @@ export async function PUT(
     const { data, error } = await supabaseAdmin
       .from('orders')
       .update({ status })
-      .eq('id', orderId);
+      .or(`id.eq.${orderId},custom_id.eq.${orderId}`)
+      .select('id, status')
+      .maybeSingle();
 
-    if (error) {
+    if (error || !data) {
       console.error(error);
       return NextResponse.json(
-        { error: 'Gagal update status order', details: error.message },
+        { error: 'Gagal update status order', details: error?.message || 'Order tidak ditemukan' },
         { status: 500 }
       );
     }
@@ -117,8 +150,8 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       message: `Status order berhasil diupdate ke: ${status}`,
-      orderId,
-      newStatus: status,
+      orderId: data.id,
+      newStatus: data.status,
     });
   } catch (error) {
     console.error('Update status error:', error);
