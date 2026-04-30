@@ -8,6 +8,23 @@ set -euo pipefail
 REPO_URL="https://github.com/rise-crystal/jasbug.git"
 COMMIT_MESSAGE="${1:-chore: sync project to GitHub and Vercel}"
 
+pause_before_exit() {
+    if [ -t 0 ]; then
+        echo ""
+        read -r -p "Tekan Enter untuk menutup..."
+    fi
+}
+
+handle_error() {
+    local exit_code=$?
+    echo ""
+    echo "❌ Proses gagal. Cek pesan error di atas."
+    pause_before_exit
+    exit "$exit_code"
+}
+
+trap handle_error ERR
+
 echo "🚀 Memulai sinkronisasi GitHub + Vercel..."
 echo ""
 
@@ -61,3 +78,4 @@ echo ""
 echo "✅ Sinkronisasi selesai!"
 echo "📦 GitHub: $REPO_URL"
 echo "☁️  Vercel production berhasil dipicu."
+pause_before_exit

@@ -86,6 +86,7 @@ echo [OK] Sinkronisasi selesai!
 echo [INFO] GitHub: %REPO_URL%
 echo [INFO] Vercel production berhasil dipicu.
 echo.
+echo Tekan tombol apa saja untuk menutup jendela ini...
 pause
 exit /b 0
 
@@ -93,5 +94,6 @@ exit /b 0
 echo.
 echo [ERROR] Proses gagal. Cek pesan error di atas.
 echo.
+echo Tekan tombol apa saja untuk menutup jendela ini...
 pause
 exit /b 1
