@@ -6,7 +6,10 @@ REM Script untuk push ke GitHub lalu deploy ke Vercel production (Windows)
 REM Usage: upload.bat
 
 set "REPO_URL=https://github.com/rise-crystal/jasbug.git"
+set "VERCEL_PROJECT=jasbug"
+set "VERCEL_SCOPE=risecrystals-projects"
 set "COMMIT_MESSAGE=chore: sync project to GitHub and Vercel"
+if not "%~1"=="" set "COMMIT_MESSAGE=%~1"
 
 echo.
 echo [INFO] Memulai sinkronisasi GitHub + Vercel...
@@ -72,13 +75,13 @@ if errorlevel 1 goto :error
 REM Link ke Vercel jika belum linked
 if not exist ".vercel\project.json" (
     echo [INFO] Project belum terhubung ke Vercel. Menjalankan vercel link...
-    vercel link
+    vercel link --yes --project "%VERCEL_PROJECT%" --scope "%VERCEL_SCOPE%"
     if errorlevel 1 goto :error
 )
 
 REM Deploy ke Vercel production
 echo [INFO] Deploy ke Vercel production...
-vercel deploy --prod
+vercel deploy --prod --yes
 if errorlevel 1 goto :error
 
 echo.

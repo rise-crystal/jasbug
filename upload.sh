@@ -6,6 +6,8 @@ set -euo pipefail
 # Usage: chmod +x upload.sh && ./upload.sh
 
 REPO_URL="https://github.com/rise-crystal/jasbug.git"
+VERCEL_PROJECT="jasbug"
+VERCEL_SCOPE="risecrystals-projects"
 COMMIT_MESSAGE="${1:-chore: sync project to GitHub and Vercel}"
 
 pause_before_exit() {
@@ -68,11 +70,11 @@ git push -u origin main
 
 if [ ! -f ".vercel/project.json" ]; then
     echo "🔗 Project belum terhubung ke Vercel. Menjalankan vercel link..."
-    vercel link
+    vercel link --yes --project "$VERCEL_PROJECT" --scope "$VERCEL_SCOPE"
 fi
 
 echo "🚀 Deploy ke Vercel production..."
-vercel deploy --prod
+vercel deploy --prod --yes
 
 echo ""
 echo "✅ Sinkronisasi selesai!"
