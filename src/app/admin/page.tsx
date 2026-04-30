@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabase } from '@/lib/supabase';
+import { formatJakartaDateTime } from '@/lib/payment-expiry';
 
 interface Order {
   id: string;
@@ -165,7 +166,7 @@ export default function AdminPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-3">
                           <span className="font-mono text-xs text-purple-400 bg-gray-900 px-2 sm:px-3 py-1.5 rounded-lg border border-purple-500/30 font-bold truncate">{order.custom_id || order.id}</span>
-                          <span className="text-xs text-gray-500">{new Date(order.created_at).toLocaleString('id-ID')}</span>
+                          <span className="text-xs text-gray-500">{formatJakartaDateTime(order.created_at)}</span>
                           {/* Badge status */}
                           {order.status === 'pending_konfirmasi_admin' && (
                             <span className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-1 rounded-full border border-yellow-500/30">⏳ Menunggu Konfirmasi</span>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSafeJakartaTimeSnapshot } from '@/lib/payment-expiry';
 
 /**
  * Admin endpoint untuk verifikasi pembayaran
@@ -59,6 +60,8 @@ export async function PUT(
       );
     }
 
+    const jakartaTime = await getSafeJakartaTimeSnapshot();
+
     // Cek apakah sudah ada bukti pembayaran
     const hasPaymentProof = order.payment_proof_url;
 
@@ -73,7 +76,7 @@ export async function PUT(
     // Update order status
     const updateData: any = {
       payment_proof_verified: verified,
-      payment_proof_verified_at: new Date().toISOString(),
+      payment_proof_verified_at: jakartaTime.isoUtc,
       // payment_verified_by: userId, // TODO: Get from auth session
     };
 
@@ -81,7 +84,7 @@ export async function PUT(
       // Jika disetujui, harus ada bukti pembayaran
       updateData.status = 'berhasil';
       updateData.bug_delivery_status = 'sent';
-      updateData.bug_sent_at = new Date().toISOString();
+      updateData.bug_sent_at = jakartaTime.isoUtc;
     } else if (!hasPaymentProof && !verified) {
       // Jika ditolak DAN tidak ada bukti (expired/timeout), set ke gagal tanpa perlu validasi bukti
       updateData.status = 'gagal';

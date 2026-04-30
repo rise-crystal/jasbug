@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabase } from '@/lib/supabase';
+import { formatJakartaDateTime } from '@/lib/payment-expiry';
 
 interface Order {
   id: string;
@@ -334,7 +335,7 @@ export default function AdminOrdersPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-3">
                           <span className="font-mono text-xs text-blue-400 bg-gray-900 px-2 sm:px-3 py-1.5 rounded-lg border border-blue-500/30 font-bold truncate">{order.custom_id || order.id}</span>
-                          <span className="text-xs text-gray-500">{new Date(order.created_at).toLocaleString('id-ID')}</span>
+                          <span className="text-xs text-gray-500">{formatJakartaDateTime(order.created_at)}</span>
                           <span className={`px-2 py-1 rounded text-xs font-bold border ${statusColors[displayStatus] || 'bg-gray-800 border-gray-600 text-gray-400'}`}
                             title={
                               displayStatus === 'pending_pembayaran' ? 'Menunggu pembayaran' :

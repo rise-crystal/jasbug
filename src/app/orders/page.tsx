@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { getSupabase } from '@/lib/supabase';
+import { formatJakartaDateTime } from '@/lib/payment-expiry';
 
 interface Order {
   id: string;
@@ -332,7 +333,7 @@ export default function OrdersPage() {
                             {order.custom_id || order.id}
                           </span>
                           <span className="text-xs text-gray-500">
-                            {new Date(order.created_at).toLocaleString('id-ID')}
+                            {formatJakartaDateTime(order.created_at)}
                           </span>
                         </div>
 

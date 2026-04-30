@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { QRISDinamis } from '@/lib/qris-dinamis';
-import { getSafeJakartaNowMs, shouldAutoExpirePayment } from '@/lib/payment-expiry';
+import { getPaymentExpiryState, getSafeJakartaNowMs, shouldAutoExpirePayment } from '@/lib/payment-expiry';
 
 // QRIS statis dasar dari merchant (contoh: DANA)
 // Ganti dengan QRIS statis merchant Anda yang sebenarnya
@@ -112,6 +112,8 @@ export async function POST(request: NextRequest) {
       }
 
       console.log('Returning success response');
+      const expiryState = getPaymentExpiryState(order.created_at, nowMs);
+
       return NextResponse.json({
         success: true,
         orderId: order.id,
@@ -119,7 +121,7 @@ export async function POST(request: NextRequest) {
         qrisString: qrisDinamis.toString(),
         qrCodeDataUrl: qrCodeDataUrl,
         merchantName: qrisDinamis.getInfo()['Merchant Name'],
-        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        expiresAt: new Date(expiryState.expiresAtMs).toISOString(),
       });
     } catch (qrisError) {
       console.error('QRIS generation error:', qrisError);

@@ -3,6 +3,7 @@
 import { phoneSchema } from './security';
 import { getSupabaseAdmin } from './supabase';
 import { QRISDinamis } from './qris-dinamis';
+import { getSafeJakartaTimeSnapshot } from './payment-expiry';
 
 // QRIS statis dasar dari merchant
 const BASE_QRIS = process.env.QRIS_STATIC_CODE || '00020101021126570011ID.DANA.WWW011893600915300050135802090005013580303UMI51440014ID.CO.QRIS.WWW0215ID10264732425470303UMI5204654053033605802ID5908SkyQueen6011Kota Bekasi6105171526304490D';
@@ -25,10 +26,13 @@ export async function createOrder(phoneNumber: string, productId?: string) {
       return { error: 'Database tidak terkonfigurasi. Periksa environment variables.' };
     }
 
+    const jakartaTime = await getSafeJakartaTimeSnapshot();
+
     // Buat order di database
     const insertData: any = {
       phone_number: validatedPhone.data,
       status: 'pending_pembayaran',
+      created_at: jakartaTime.isoUtc,
     };
 
     if (productId) {

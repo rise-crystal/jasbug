@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabase } from '@/lib/supabase';
+import { formatJakartaDateTime } from '@/lib/payment-expiry';
 
 interface Order {
   id: string;
@@ -476,7 +477,7 @@ function PaymentContent() {
                     {selectedOrder.custom_id || selectedOrder.id}
                   </span>
                   <span className="text-xs text-gray-500">
-                    {new Date(selectedOrder.created_at).toLocaleString('id-ID')}
+                    {formatJakartaDateTime(selectedOrder.created_at)}
                   </span>
                   {/* Badge status */}
                   {selectedOrder.status === 'pending_konfirmasi_admin' && (
@@ -615,7 +616,7 @@ function PaymentContent() {
                             <p className="text-green-400 font-bold text-sm">Pembayaran Terverifikasi!</p>
                             {selectedOrder.payment_proof_verified_at && (
                               <p className="text-green-300 text-xs mt-1">
-                                Diverifikasi: {new Date(selectedOrder.payment_proof_verified_at).toLocaleString('id-ID')}
+                              Diverifikasi: {formatJakartaDateTime(selectedOrder.payment_proof_verified_at)}
                               </p>
                             )}
                           </div>
@@ -756,7 +757,7 @@ function PaymentContent() {
                       </p>
                       {selectedOrder.bug_sent_at && (
                         <p className="text-green-400 text-xs mt-1">
-                          Dikirim: {new Date(selectedOrder.bug_sent_at).toLocaleString('id-ID')}
+                          Dikirim: {formatJakartaDateTime(selectedOrder.bug_sent_at)}
                         </p>
                       )}
                     </div>
