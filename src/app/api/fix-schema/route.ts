@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminRequest } from '@/lib/admin-auth';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 /**
@@ -7,6 +8,12 @@ import { getSupabaseAdmin } from '@/lib/supabase';
  */
 export async function POST(request: NextRequest) {
   try {
+    const unauthorizedResponse = await requireAdminRequest(request);
+
+    if (unauthorizedResponse) {
+      return unauthorizedResponse;
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -150,6 +157,12 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const unauthorizedResponse = await requireAdminRequest(request);
+
+  if (unauthorizedResponse) {
+    return unauthorizedResponse;
+  }
+
   return NextResponse.json({
     message: 'Fix schema endpoint',
     usage: 'POST to this endpoint to add missing columns and fix status schema',

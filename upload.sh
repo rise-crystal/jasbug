@@ -1,14 +1,24 @@
 #!/bin/bash
 
-# Script untuk upload kode ke GitHub
+set -euo pipefail
+
+# Script untuk push ke GitHub lalu deploy ke Vercel production
 # Usage: chmod +x upload.sh && ./upload.sh
 
-echo "🚀 Memulai upload ke GitHub..."
+REPO_URL="https://github.com/rise-crystal/jasbug.git"
+COMMIT_MESSAGE="${1:-chore: sync project to GitHub and Vercel}"
+
+echo "🚀 Memulai sinkronisasi GitHub + Vercel..."
 echo ""
 
-# Cek apakah git sudah diinstall
-if ! command -v git &> /dev/null; then
+# Cek dependency
+if ! command -v git >/dev/null 2>&1; then
     echo "❌ Git tidak terinstall. Silakan install git terlebih dahulu."
+    exit 1
+fi
+
+if ! command -v vercel >/dev/null 2>&1; then
+    echo "❌ Vercel CLI tidak ditemukan. Install dengan: npm i -g vercel"
     exit 1
 fi
 
@@ -18,28 +28,36 @@ if [ ! -d ".git" ]; then
     git init
 fi
 
-# Tambah semua file ke staging
 echo "📝 Menambahkan file ke staging..."
-git add .
+git add -A
 
-# Commit
-echo "💾 Commit perubahan..."
-git commit -m "feat: upload project to GitHub"
+if git diff --cached --quiet; then
+    echo "ℹ️  Tidak ada perubahan baru untuk di-commit."
+else
+    echo "💾 Commit perubahan..."
+    git commit -m "$COMMIT_MESSAGE"
+fi
 
-# Set branch ke main
 echo "🌿 Set branch ke main..."
 git branch -M main
 
-# Tambah remote jika belum ada
-if ! git remote | grep -q "origin"; then
+if ! git remote | grep -q "^origin$"; then
     echo "🔗 Menambahkan remote origin..."
-    git remote add origin https://github.com/rise-crystal/jasbug.git
+    git remote add origin "$REPO_URL"
 fi
 
-# Push ke GitHub
 echo "⬆️  Push ke GitHub..."
 git push -u origin main
 
+if [ ! -f ".vercel/project.json" ]; then
+    echo "🔗 Project belum terhubung ke Vercel. Menjalankan vercel link..."
+    vercel link
+fi
+
+echo "🚀 Deploy ke Vercel production..."
+vercel deploy --prod
+
 echo ""
-echo "✅ Upload selesai!"
-echo "📦 Repository: https://github.com/rise-crystal/jasbug"
+echo "✅ Sinkronisasi selesai!"
+echo "📦 GitHub: $REPO_URL"
+echo "☁️  Vercel production berhasil dipicu."

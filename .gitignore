@@ -54,3 +54,5 @@ logs/
 
 # Uploads (optional - uncomment if you don't want to track uploads)
 # /public/uploads/
+
+.vercel

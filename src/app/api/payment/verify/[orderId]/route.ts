@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminRequest } from '@/lib/admin-auth';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { getSafeJakartaTimeSnapshot } from '@/lib/payment-expiry';
 
@@ -11,6 +12,12 @@ export async function PUT(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
+    const unauthorizedResponse = await requireAdminRequest(request);
+
+    if (unauthorizedResponse) {
+      return unauthorizedResponse;
+    }
+
     const resolvedParams = await params;
     const { orderId } = resolvedParams;
     const body = await request.json();

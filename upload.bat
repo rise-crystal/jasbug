@@ -1,50 +1,97 @@
 @echo off
-REM Script untuk upload kode ke GitHub (Windows)
+setlocal
+chcp 65001 >nul
+
+REM Script untuk push ke GitHub lalu deploy ke Vercel production (Windows)
 REM Usage: upload.bat
 
+set "REPO_URL=https://github.com/rise-crystal/jasbug.git"
+set "COMMIT_MESSAGE=chore: sync project to GitHub and Vercel"
+
 echo.
-echo 🚀 Memulai upload ke GitHub...
+echo [INFO] Memulai sinkronisasi GitHub + Vercel...
 echo.
 
 REM Cek apakah git sudah diinstall
 where git >nul 2>nul
 if %errorlevel% neq 0 (
-    echo ❌ Git tidak terinstall. Silakan install git terlebih dahulu.
+    echo [ERROR] Git tidak terinstall. Silakan install git terlebih dahulu.
+    pause
+    exit /b 1
+)
+
+REM Cek apakah vercel CLI sudah diinstall
+where vercel >nul 2>nul
+if %errorlevel% neq 0 (
+    echo [ERROR] Vercel CLI tidak ditemukan. Install dengan: npm i -g vercel
     pause
     exit /b 1
 )
 
 REM Inisialisasi git jika belum ada
 if not exist ".git" (
-    echo 📦 Inisialisasi Git repository...
+    echo [INFO] Inisialisasi Git repository...
     git init
+    if %errorlevel% neq 0 goto :error
 )
 
 REM Tambah semua file ke staging
-echo 📝 Menambahkan file ke staging...
-git add .
+echo [INFO] Menambahkan file ke staging...
+git add -A
+if %errorlevel% neq 0 goto :error
 
-REM Commit
-echo 💾 Commit perubahan...
-git commit -m "feat: upload project to GitHub"
+REM Commit hanya jika ada perubahan
+git diff --cached --quiet
+if %errorlevel% equ 0 (
+    echo [INFO] Tidak ada perubahan baru untuk di-commit.
+) else (
+    if %errorlevel% neq 1 goto :error
+    echo [INFO] Commit perubahan...
+    git commit -m "%COMMIT_MESSAGE%"
+    if %errorlevel% neq 0 goto :error
+)
 
 REM Set branch ke main
-echo 🌿 Set branch ke main...
+echo [INFO] Set branch ke main...
 git branch -M main
+if %errorlevel% neq 0 goto :error
 
 REM Tambah remote jika belum ada
 git remote | findstr "origin" >nul
 if %errorlevel% neq 0 (
-    echo 🔗 Menambahkan remote origin...
-    git remote add origin https://github.com/rise-crystal/jasbug.git
+    echo [INFO] Menambahkan remote origin...
+    git remote add origin %REPO_URL%
+    if %errorlevel% neq 0 goto :error
 )
 
 REM Push ke GitHub
-echo ⬆️  Push ke GitHub...
+echo [INFO] Push ke GitHub...
 git push -u origin main
+if %errorlevel% neq 0 goto :error
+
+REM Link ke Vercel jika belum linked
+if not exist ".vercel\project.json" (
+    echo [INFO] Project belum terhubung ke Vercel. Menjalankan vercel link...
+    vercel link
+    if %errorlevel% neq 0 goto :error
+)
+
+REM Deploy ke Vercel production
+echo [INFO] Deploy ke Vercel production...
+vercel deploy --prod
+if %errorlevel% neq 0 goto :error
 
 echo.
-echo ✅ Upload selesai!
-echo 📦 Repository: https://github.com/rise-crystal/jasbug
+echo [OK] Sinkronisasi selesai!
+echo [INFO] GitHub: %REPO_URL%
+echo [INFO] Vercel production berhasil dipicu.
 echo.
 pause
+exit /b 0
+
+:error
+echo.
+echo [ERROR] Proses gagal. Cek pesan error di atas.
+echo.
+pause
+exit /b 1

@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -11,10 +12,17 @@ import { getSupabaseAdmin } from '@/lib/supabase';
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    
-    // Log webhook untuk debugging
-    console.log('📥 Webhook received:', JSON.stringify(body, null, 2));
+    const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      return NextResponse.json(
+        { error: 'PAYMENT_WEBHOOK_SECRET belum dikonfigurasi' },
+        { status: 500 }
+      );
+    }
+
+    const rawBody = await request.text();
+    const body = JSON.parse(rawBody);
 
     // Contoh struktur payload dari payment provider:
     // {
@@ -26,6 +34,11 @@ export async function POST(request: NextRequest) {
     // }
 
     const { order_id, transaction_id, status, amount, signature } = body;
+    const receivedSignature =
+      request.headers.get('x-signature') ||
+      request.headers.get('x-webhook-signature') ||
+      request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
+      (typeof signature === 'string' ? signature : null);
 
     // Validasi required fields
     if (!order_id || !status) {
@@ -35,15 +48,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Verifikasi signature dari payment provider
-    // const expectedSignature = crypto
-    //   .createHmac('sha256', process.env.PAYMENT_WEBHOOK_SECRET || '')
-    //   .update(JSON.stringify(body))
-    //   .digest('hex');
-    // 
-    // if (signature !== expectedSignature) {
-    //   return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-    // }
+    if (!receivedSignature) {
+      return NextResponse.json(
+        { error: 'Missing webhook signature' },
+        { status: 401 }
+      );
+    }
+
+    const bodyWithoutSignature =
+      body && typeof body === 'object' && !Array.isArray(body)
+        ? Object.fromEntries(Object.entries(body).filter(([key]) => key !== 'signature'))
+        : body;
+
+    const normalizedSignature = receivedSignature.replace(/^sha256=/i, '');
+
+    if (
+      !matchesWebhookSignature(normalizedSignature, rawBody, webhookSecret) &&
+      !matchesWebhookSignature(normalizedSignature, JSON.stringify(bodyWithoutSignature), webhookSecret)
+    ) {
+      return NextResponse.json(
+        { error: 'Invalid webhook signature' },
+        { status: 401 }
+      );
+    }
+
+    console.log('📥 Verified webhook received for order:', order_id);
 
     const supabaseAdmin = getSupabaseAdmin();
     if (!supabaseAdmin) {
@@ -141,4 +170,22 @@ export async function GET(request: NextRequest) {
       signature: 'string (optional, for verification)',
     },
   });
+}
+
+function matchesWebhookSignature(signature: string, content: string, secret: string): boolean {
+  const digest = crypto.createHmac('sha256', secret).update(content).digest();
+  const candidates = [digest.toString('hex'), digest.toString('base64')];
+
+  return candidates.some(candidate => safeCompareStrings(signature, candidate));
+}
+
+function safeCompareStrings(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+
+  if (leftBuffer.length !== rightBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(leftBuffer, rightBuffer);
 }

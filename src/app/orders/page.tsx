@@ -47,15 +47,6 @@ export default function OrdersPage() {
     }
 
     const fetchOrders = async () => {
-      try {
-        await fetch('/api/payment/auto-expire', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
-      } catch (error) {
-        console.error('Auto-expire API call failed:', error);
-      }
-
       const { data, error } = await supabase
         .from('orders')
         .select('*')

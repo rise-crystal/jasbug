@@ -39,17 +39,6 @@ export default function AdminPage() {
     }
 
     const fetchOrders = async () => {
-      // Pertama, panggil auto-expire API untuk memastikan semua order yang expired terupdate
-      try {
-        await fetch('/api/payment/auto-expire', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        console.log('✅ Auto-expire API called');
-      } catch (error) {
-        console.error('⚠️ Auto-expire API call failed:', error);
-      }
-
       const { data, error } = await supabase
         .from('orders')
         .select('*')
@@ -57,7 +46,6 @@ export default function AdminPage() {
         .order('created_at', { ascending: false });
 
       if (data) {
-        // Langsung set orders (auto-expire API sudah handle di server)
         setOrders(data);
       }
       setLoading(false);

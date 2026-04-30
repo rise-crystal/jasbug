@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  createAdminSessionToken,
+  getAdminSessionCookieName,
+  getAdminSessionCookieOptions,
+  hasValidAdminSession,
+} from '@/lib/admin-session';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,14 +41,13 @@ export async function POST(request: NextRequest) {
       message: 'Login berhasil',
     });
 
-    // Set cookie untuk session (valid 24 jam)
-    response.cookies.set('admin_session', 'authenticated', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 24, // 24 hours
-      path: '/',
-    });
+    const { token, expiresAt } = await createAdminSessionToken();
+
+    response.cookies.set(
+      getAdminSessionCookieName(),
+      token,
+      getAdminSessionCookieOptions(expiresAt)
+    );
 
     return response;
   } catch (error) {
@@ -55,9 +60,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = request.cookies.get('admin_session')?.value;
-  
-  if (session === 'authenticated') {
+  if (await hasValidAdminSession(request)) {
     return NextResponse.json({ authenticated: true });
   }
   
@@ -70,12 +73,9 @@ export async function DELETE() {
     message: 'Logout berhasil',
   });
 
-  response.cookies.set('admin_session', '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+  response.cookies.set(getAdminSessionCookieName(), '', {
+    ...getAdminSessionCookieOptions(new Date(0)),
     maxAge: 0,
-    path: '/',
   });
 
   return response;
