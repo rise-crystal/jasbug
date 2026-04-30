@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/payment/auto-expire",
-      "schedule": "*/1 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
