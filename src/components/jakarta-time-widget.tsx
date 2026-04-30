@@ -69,19 +69,17 @@ export function JakartaTimeWidget() {
   }, []);
 
   return (
-    <div className="fixed top-3 right-3 z-[100] pointer-events-none">
-      <div className="rounded-2xl border border-cyan-400/30 bg-gray-950/80 px-3 py-2 shadow-2xl shadow-cyan-500/10 backdrop-blur-md">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">
-          Realtime Clock
+    <div className="fixed top-3 left-1/2 z-[100] -translate-x-1/2 pointer-events-none">
+      <div className="rounded-2xl border border-cyan-400/30 bg-gray-950/85 px-4 py-2 shadow-2xl shadow-cyan-500/10 backdrop-blur-md">
+        <p className="text-center font-mono text-sm font-black tracking-[0.18em] text-white sm:text-base">
+          {serverNowMs ? formatTime(serverNowMs, timeZone) : '00:00:00'}{' '}
+          <span className="text-cyan-300">Asia/Jakarta</span>
         </p>
-        <p className="mt-1 text-sm font-black text-white sm:text-base">
-          {serverNowMs ? formatTime(serverNowMs, timeZone) : '--:--:--'}
-        </p>
-        <p className="text-[11px] text-gray-300 sm:text-xs">
+        <p className="mt-1 text-center text-[11px] text-gray-300 sm:text-xs">
           {serverNowMs ? formatDate(serverNowMs, timeZone) : 'Memuat waktu...'}
         </p>
-        <p className="text-[10px] text-cyan-200/90 sm:text-[11px]">
-          {location} • {timeZone}
+        <p className="text-center text-[10px] uppercase tracking-[0.16em] text-cyan-200/90 sm:text-[11px]">
+          {location}
         </p>
       </div>
     </div>
