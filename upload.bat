@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul
 
 REM Script untuk push ke GitHub lalu deploy ke Vercel production (Windows)
@@ -32,54 +32,54 @@ REM Inisialisasi git jika belum ada
 if not exist ".git" (
     echo [INFO] Inisialisasi Git repository...
     git init
-    if %errorlevel% neq 0 goto :error
+    if errorlevel 1 goto :error
 )
 
 REM Tambah semua file ke staging
 echo [INFO] Menambahkan file ke staging...
 git add -A
-if %errorlevel% neq 0 goto :error
+if errorlevel 1 goto :error
 
 REM Commit hanya jika ada perubahan
 git diff --cached --quiet
-if %errorlevel% equ 0 (
+if !errorlevel! equ 0 (
     echo [INFO] Tidak ada perubahan baru untuk di-commit.
 ) else (
-    if %errorlevel% neq 1 goto :error
+    if !errorlevel! neq 1 goto :error
     echo [INFO] Commit perubahan...
     git commit -m "%COMMIT_MESSAGE%"
-    if %errorlevel% neq 0 goto :error
+    if errorlevel 1 goto :error
 )
 
 REM Set branch ke main
 echo [INFO] Set branch ke main...
 git branch -M main
-if %errorlevel% neq 0 goto :error
+if errorlevel 1 goto :error
 
 REM Tambah remote jika belum ada
 git remote | findstr "origin" >nul
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     echo [INFO] Menambahkan remote origin...
     git remote add origin %REPO_URL%
-    if %errorlevel% neq 0 goto :error
+    if errorlevel 1 goto :error
 )
 
 REM Push ke GitHub
 echo [INFO] Push ke GitHub...
 git push -u origin main
-if %errorlevel% neq 0 goto :error
+if errorlevel 1 goto :error
 
 REM Link ke Vercel jika belum linked
 if not exist ".vercel\project.json" (
     echo [INFO] Project belum terhubung ke Vercel. Menjalankan vercel link...
     vercel link
-    if %errorlevel% neq 0 goto :error
+    if errorlevel 1 goto :error
 )
 
 REM Deploy ke Vercel production
 echo [INFO] Deploy ke Vercel production...
 vercel deploy --prod
-if %errorlevel% neq 0 goto :error
+if errorlevel 1 goto :error
 
 echo.
 echo [OK] Sinkronisasi selesai!
