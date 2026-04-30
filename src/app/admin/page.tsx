@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSupabase } from '@/lib/supabase';
 import { formatJakartaDateTime } from '@/lib/payment-expiry';
 
 interface Order {
@@ -22,8 +21,6 @@ const productMap: Record<string, { name: string; image: string }> = {
   'computer-bug': { name: 'Power Bug 🔥', image: 'https://media.tenor.com/1B8g80k8vC4AAAAi/gf.gif' },
 };
 
-const supabase = getSupabase();
-
 export default function AdminPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -32,39 +29,60 @@ export default function AdminPage() {
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!supabase) {
-      console.error('Supabase client not initialized');
-      setLoading(false);
-      return;
-    }
+    let isActive = true;
 
-    const fetchOrders = async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .in('status', ['pending_pembayaran', 'pending_konfirmasi_admin'])
-        .order('created_at', { ascending: false });
-
-      if (data) {
-        setOrders(data);
+    const fetchOrders = async (showLoader = false) => {
+      if (showLoader && isActive) {
+        setLoading(true);
       }
-      setLoading(false);
+
+      try {
+        const response = await fetch('/api/admin/orders?scope=pending', {
+          cache: 'no-store',
+        });
+        const result = await response.json();
+
+        if (response.status === 401) {
+          router.push('/admin/login');
+          router.refresh();
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Gagal mengambil daftar order admin');
+        }
+
+        if (isActive) {
+          setOrders(Array.isArray(result.orders) ? result.orders : []);
+        }
+      } catch (error) {
+        console.error('Admin pending orders fetch error:', error);
+
+        if (showLoader && isActive) {
+          setOrders([]);
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
     };
 
-    fetchOrders();
+    void fetchOrders(true);
 
     // NOTE: Realtime WebSocket is blocked by CSP, so we use polling only
     // Polling setiap 10 detik untuk memastikan data selalu terupdate
     const pollingInterval = setInterval(() => {
       console.log('📡 Admin: Polling - Refetching orders for auto-expire check...');
-      fetchOrders();
+      void fetchOrders();
     }, 10000); // 10 seconds
 
     return () => {
+      isActive = false;
       clearInterval(pollingInterval);
       console.log('Cleanup admin polling');
     };
-  }, []);
+  }, [router]);
 
   const handleLogout = async () => {
     await fetch('/api/admin/login', { method: 'DELETE' });

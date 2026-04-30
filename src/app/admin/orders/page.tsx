@@ -43,38 +43,60 @@ export default function AdminOrdersPage() {
   const [rowsPerPage, setRowsPerPage] = useState(15);
 
   useEffect(() => {
-    if (!supabase) {
-      console.error('Supabase client not initialized');
-      setLoading(false);
-      return;
-    }
+    let isActive = true;
 
-    const fetchOrders = async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (data) {
-        setOrders(data);
+    const fetchOrders = async (showLoader = false) => {
+      if (showLoader && isActive) {
+        setLoading(true);
       }
-      setLoading(false);
+
+      try {
+        const response = await fetch('/api/admin/orders?scope=all', {
+          cache: 'no-store',
+        });
+        const result = await response.json();
+
+        if (response.status === 401) {
+          router.push('/admin/login');
+          router.refresh();
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Gagal mengambil semua order admin');
+        }
+
+        if (isActive) {
+          setOrders(Array.isArray(result.orders) ? result.orders : []);
+        }
+      } catch (error) {
+        console.error('Admin orders fetch error:', error);
+
+        if (showLoader && isActive) {
+          setOrders([]);
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
     };
 
-    fetchOrders();
+    void fetchOrders(true);
 
     // NOTE: Realtime WebSocket is blocked by CSP, so we use polling only
     // Polling setiap 15 detik untuk memastikan data selalu terupdate
     const pollingInterval = setInterval(() => {
       console.log('📡 Admin: Polling - Refetching orders...');
-      fetchOrders();
+      void fetchOrders();
     }, 15000); // 15 seconds
 
     return () => {
+      isActive = false;
       clearInterval(pollingInterval);
       console.log('Cleanup admin orders polling');
     };
-  }, []);
+  }, [router]);
 
   const handleLogout = async () => {
     await fetch('/api/admin/login', { method: 'DELETE' });
