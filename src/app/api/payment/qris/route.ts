@@ -9,7 +9,7 @@ const BASE_QRIS = process.env.QRIS_STATIC_CODE || '00020101021126570011ID.DANA.W
 
 // Harga produk (dalam rupiah)
 const PRODUCT_PRICES: Record<string, number> = {
-  'computer-bug': 10000,
+  'computer-bug': 5000,
 };
 
 export async function POST(request: NextRequest) {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     // Tentukan jumlah pembayaran
     const productId = order.product_id || 'computer-bug';
-    const amount = PRODUCT_PRICES[productId] || 10000;
+    const amount = PRODUCT_PRICES[productId] || 5000;
     console.log('Product ID:', productId, 'Amount:', amount);
 
     // Generate QRIS dinamis

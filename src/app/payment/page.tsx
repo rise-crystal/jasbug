@@ -23,7 +23,7 @@ interface Order {
 }
 
 const productMap: Record<string, { name: string; image: string; price: number }> = {
-  'computer-bug': { name: 'Power Bug 🔥', image: 'https://media.tenor.com/1B8g80k8vC4AAAAi/gf.gif', price: 10000 },
+  'computer-bug': { name: 'Power Bug 🔥', image: 'https://media.tenor.com/1B8g80k8vC4AAAAi/gf.gif', price: 5000 },
 };
 
 const supabase = getSupabase();
@@ -546,7 +546,7 @@ function PaymentContent() {
                 <div className="bg-gradient-to-r from-orange-600 to-red-600 rounded-lg p-3 text-center">
                   <p className="text-white/80 text-xs mb-1">Total Pembayaran</p>
                   <p className="text-white font-black text-xl sm:text-2xl">
-                    Rp {selectedOrder.payment_amount?.toLocaleString('id-ID') || '10.000'}
+                    Rp {selectedOrder.payment_amount?.toLocaleString('id-ID') || '5.000'}
                   </p>
                 </div>
               </div>

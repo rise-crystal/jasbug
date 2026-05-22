@@ -10,7 +10,7 @@ const BASE_QRIS = process.env.QRIS_STATIC_CODE || '00020101021126570011ID.DANA.W
 
 // Harga produk (dalam rupiah)
 const PRODUCT_PRICES: Record<string, number> = {
-  'computer-bug': 10000,
+  'computer-bug': 5000,
 };
 
 export async function createOrder(phoneNumber: string, productId?: string) {
@@ -53,7 +53,7 @@ export async function createOrder(phoneNumber: string, productId?: string) {
     // Auto-generate QRIS dinamis
     try {
       const product = productId || 'computer-bug';
-      const amount = PRODUCT_PRICES[product] || 10000;
+      const amount = PRODUCT_PRICES[product] || 5000;
 
       console.log('Auto-generating QRIS for order:', order.id);
       const qris = new QRISDinamis(BASE_QRIS);

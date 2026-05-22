@@ -91,8 +91,14 @@ export default function Home() {
               <p className="text-gray-400 text-xs sm:text-sm mb-4">Ultimate Bug & Malware Collection</p>
 
               {/* Price Tag */}
-              <div className="inline-block bg-gradient-to-r from-red-600 to-orange-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-full font-black text-lg sm:text-xl shadow-lg shadow-red-500/50">
-                <span className="text-xs sm:text-sm font-normal">Rp</span> 10.000
+              <div className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-gradient-to-r from-red-600 to-orange-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-full font-black text-lg sm:text-xl shadow-lg shadow-red-500/50">
+                <span><span className="text-xs sm:text-sm font-normal">Rp</span> 5.000</span>
+                <span className="bg-white/20 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase">
+                  Diskon 50%
+                </span>
+                <span className="text-xs sm:text-sm font-semibold italic text-white/80 line-through">
+                  Rp 10.000
+                </span>
               </div>
 
               {/* Stats */}
